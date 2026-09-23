@@ -26,3 +26,6 @@ app.use(eventsRoutes);
 
 const applicationsRoutes = require('./routes/applications');
 app.use(applicationsRoutes);
+
+const ratingsRoutes = require('./routes/ratings');
+app.use(ratingsRoutes);
