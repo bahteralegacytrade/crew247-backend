@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew247.id - Direktori Kru</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #12141a;
+      color: #eef0f4;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; }
+    .header-card {
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px;
+      padding: 22px 20px; margin-bottom: 18px;
+    }
+    h1 { color: #e9a23b; font-size: 20px; margin: 0 0 6px; }
+    p.sub { color: #9aa2b1; font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
+    label {
+      display: block; font-size: 11px; font-weight: 600; color: #9aa2b1;
+      margin-bottom: 6px; text-transform: uppercase;
+    }
+    input, select {
+      width: 100%; background: #22262f; border: 1px solid #2c313c; color: #eef0f4;
+      padding: 10px 12px; border-radius: 9px; font-size: 14px; margin-bottom: 12px;
+      font-family: inherit;
+    }
+    input:focus, select:focus { outline: 2px solid #e9a23b; outline-offset: 1px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button {
+      width: 100%; background: #e9a23b; color: #3a2506; border: none; padding: 12px;
+      border-radius: 9px; font-weight: 700; font-size: 14.5px; cursor: pointer;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-box {
+      background: #2b1712; border: 1px solid #4a2a20; color: #f0725c; padding: 10px 12px;
+      border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none;
+    }
+    .meta-info {
+      background: #22262f; border: 1px dashed #2c313c; border-radius: 9px;
+      padding: 10px 14px; font-size: 13px; color: #9aa2b1; margin-bottom: 16px; display: none;
+    }
+    .meta-info b { color: #eef0f4; }
+    .crew-card {
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 14px;
+      padding: 16px; margin-bottom: 12px;
+    }
+    .crew-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .crew-name { font-weight: 700; font-size: 15px; }
+    .crew-role { font-size: 12.5px; color: #9aa2b1; margin-top: 2px; }
+    .crew-meta { font-size: 11.5px; color: #9aa2b1; margin-top: 4px; }
+    .rate {
+      font-weight: 700; font-size: 14px; color: #e9a23b; white-space: nowrap;
+    }
+    .tags { margin-top: 10px; }
+    .tag {
+      display: inline-block; background: #22262f; border: 1px solid #2c313c; color: #9aa2b1;
+      font-size: 10.5px; padding: 3px 8px; border-radius: 6px; margin: 2px 4px 0 0;
+    }
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: #9aa2b1; font-size: 13.5px;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="header-card">
+      <h1>Direktori Kru Tersedia</h1>
+      <p class="sub">Cari kru panggung profesional yang siap bertugas di rentang tanggal acara Anda.</p>
+
+      <div id="error-box" class="error-box"></div>
+
+      <div class="row2">
+        <div>
+          <label>Tanggal Mulai *</label>
+          <input type="date" id="tanggal_mulai" required>
+        </div>
+        <div>
+          <label>Tanggal Selesai *</label>
+          <input type="date" id="tanggal_selesai" required>
+        </div>
+      </div>
+
+      <label>Peran Utama</label>
+      <select id="peran_utama">
+        <option value="">Semua Peran</option>
+        <option value="FOH Audio Engineer">FOH Audio Engineer</option>
+        <option value="Monitor Engineer">Monitor Engineer</option>
+        <option value="Lighting Designer">Lighting Designer</option>
+        <option value="Stage Manager">Stage Manager</option>
+        <option value="Backline Tech">Backline Tech</option>
+        <option value="VJ & LED Tech">VJ & LED Tech</option>
+      </select>
+
+      <label>Kota Domisili</label>
+      <input type="text" id="kota" placeholder="Kosongkan untuk semua kota">
+
+      <button id="btn-cari">Cari Kru Tersedia</button>
+    </div>
+
+    <div id="meta-info" class="meta-info"></div>
+
+    <div id="results-container"></div>
+
+  </div>
+
+<script>
+  const errorBox = document.getElementById('error-box');
+  const metaInfo = document.getElementById('meta-info');
+  const resultsContainer = document.getElementById('results-container');
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+  function hideError() {
+    errorBox.style.display = 'none';
+  }
+  function fmtRupiah(angka) {
+    return 'Rp ' + Number(angka).toLocaleString('id-ID');
+  }
+
+  // Isi otomatis dari query parameter URL (kalau datang dari redirect posting-event.html)
+  const params = new URLSearchParams(window.location.search);
+  const qMulai = params.get('tanggal_mulai');
+  const qSelesai = params.get('tanggal_selesai');
+
+  if (qMulai) document.getElementById('tanggal_mulai').value = qMulai;
+  if (qSelesai) document.getElementById('tanggal_selesai').value = qSelesai;
+
+  // Kalau sudah ada tanggal dari URL, langsung cari otomatis
+  if (qMulai && qSelesai) {
+    cariKru();
+  }
+
+  document.getElementById('btn-cari').addEventListener('click', cariKru);
+
+  async function cariKru() {
+    hideError();
+    metaInfo.style.display = 'none';
+    resultsContainer.innerHTML = '';
+
+    const tanggalMulai = document.getElementById('tanggal_mulai').value;
+    const tanggalSelesai = document.getElementById('tanggal_selesai').value;
+    const peranUtama = document.getElementById('peran_utama').value;
+    const kota = document.getElementById('kota').value.trim();
+
+    if (!tanggalMulai || !tanggalSelesai) {
+      showError('Tanggal mulai dan tanggal selesai wajib diisi.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-cari');
+    btn.disabled = true;
+    btn.textContent = 'Mencari...';
+
+    try {
+      let url = `/api/crew/directory?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`;
+      if (peranUtama) url += `&peran_utama=${encodeURIComponent(peranUtama)}`;
+      if (kota) url += `&kota=${encodeURIComponent(kota)}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Gagal memuat direktori kru.');
+        btn.disabled = false;
+        btn.textContent = 'Cari Kru Tersedia';
+        return;
+      }
+
+      // Tampilkan info transparansi
+      const totalTersedia = data.meta.total_kru_tersedia;
+      const totalDisembunyikan = data.meta.total_kru_disembunyikan_karena_bentrok;
+      const totalKeseluruhan = totalTersedia + totalDisembunyikan;
+
+      metaInfo.innerHTML = `<b>${totalTersedia} dari ${totalKeseluruhan} kru</b> tersedia di tanggal ini. <b>${totalDisembunyikan} kru</b> disembunyikan karena bentrok jadwal.`;
+      metaInfo.style.display = 'block';
+
+      if (data.data.length === 0) {
+        resultsContainer.innerHTML = `<div class="empty-state">Tidak ada kru tersedia di tanggal ini. Coba tanggal atau filter lain.</div>`;
+      } else {
+        resultsContainer.innerHTML = data.data.map(renderCrewCard).join('');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Cari Kru Tersedia';
+
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Cari Kru Tersedia';
+    }
+  }
+
+  function renderCrewCard(crew) {
+    const tags = (crew.keahlian || []).map(k => `<span class="tag">${k}</span>`).join('');
+    return `
+      <div class="crew-card">
+        <div class="crew-top">
+          <div>
+            <div class="crew-name">${crew.nama_lengkap} <span style="color:#9aa2b1; font-weight:400;">(${crew.nama_panggung})</span></div>
+            <div class="crew-role">${crew.peran_utama} · ${crew.kota}</div>
+            <div class="crew-meta">★ ${crew.rating_avg} (${crew.total_gig_selesai} gig selesai)</div>
+          </div>
+          <div class="rate">${fmtRupiah(crew.rate_harian)}<br><span style="font-size:10px; font-weight:400; color:#9aa2b1;">/hari</span></div>
+        </div>
+        <div class="tags">${tags}</div>
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>
