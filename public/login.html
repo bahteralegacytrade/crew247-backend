@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew247.id - Login / Pendaftaran Kru</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #12141a;
+      color: #eef0f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1b1e27;
+      border: 1px solid #2c313c;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 380px;
+    }
+    h1 {
+      color: #e9a23b;
+      font-size: 22px;
+      margin: 0 0 6px;
+    }
+    p.sub {
+      color: #9aa2b1;
+      font-size: 13.5px;
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #9aa2b1;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    input {
+      width: 100%;
+      background: #22262f;
+      border: 1px solid #2c313c;
+      color: #eef0f4;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    input:focus {
+      outline: 2px solid #e9a23b;
+      outline-offset: 1px;
+    }
+    button {
+      width: 100%;
+      background: #e9a23b;
+      color: #3a2506;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-box {
+      background: #2b1712;
+      border: 1px solid #4a2a20;
+      color: #f0725c;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .hidden { display: none; }
+    .success-icon { font-size: 40px; text-align: center; margin-bottom: 10px; }
+    .success-detail {
+      background: #22262f;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #9aa2b1;
+      word-break: break-all;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+
+    <!-- STEP 1: Input nomor HP -->
+    <div id="step-phone">
+      <h1>Masuk / Daftar Kru</h1>
+      <p class="sub">Masukkan nomor WhatsApp Anda untuk menerima kode verifikasi OTP.</p>
+      <div id="error-phone" class="error-box"></div>
+      <label>Nomor WhatsApp</label>
+      <input type="text" id="input-phone" placeholder="628123456789">
+      <button id="btn-send-otp">Kirim Kode OTP</button>
+    </div>
+
+    <!-- STEP 2: Input OTP -->
+    <div id="step-otp" class="hidden">
+      <h1>Verifikasi OTP</h1>
+      <p class="sub">Masukkan 6 digit kode yang dikirim ke WhatsApp nomor <b id="phone-display"></b>.</p>
+      <div id="error-otp" class="error-box"></div>
+      <label>Kode OTP (6 digit)</label>
+      <input type="text" id="input-otp" placeholder="123456" maxlength="6">
+      <button id="btn-verify-otp">Verifikasi & Masuk</button>
+    </div>
+
+    <!-- STEP 3: Sukses -->
+    <div id="step-success" class="hidden">
+      <div class="success-icon">🎉</div>
+      <h1 style="text-align:center;">Berhasil Masuk!</h1>
+      <p class="sub" style="text-align:center;">Autentikasi Crew247.id Anda berhasil terverifikasi.</p>
+      <div class="success-detail">
+        <div><b>User ID:</b> <span id="result-user-id"></span></div>
+        <div style="margin-top:4px;"><b>No. HP:</b> <span id="result-no-hp"></span></div>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  let currentPhone = '';
+
+  const stepPhone = document.getElementById('step-phone');
+  const stepOtp = document.getElementById('step-otp');
+  const stepSuccess = document.getElementById('step-success');
+
+  const errorPhone = document.getElementById('error-phone');
+  const errorOtp = document.getElementById('error-otp');
+
+  function showError(el, message) {
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  function hideError(el) {
+    el.style.display = 'none';
+  }
+
+  // STEP 1 -> Kirim OTP
+  document.getElementById('btn-send-otp').addEventListener('click', async () => {
+    const phone = document.getElementById('input-phone').value.trim();
+    hideError(errorPhone);
+
+    if (!phone) {
+      showError(errorPhone, 'Nomor WhatsApp wajib diisi.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-send-otp');
+    btn.disabled = true;
+    btn.textContent = 'Mengirim...';
+
+    try {
+      const res = await fetch('/api/auth/otp/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ no_hp: phone, role: 'kru' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(errorPhone, data.error || 'Gagal mengirim OTP.');
+        btn.disabled = false;
+        btn.textContent = 'Kirim Kode OTP';
+        return;
+      }
+
+      currentPhone = phone;
+      document.getElementById('phone-display').textContent = phone;
+      stepPhone.classList.add('hidden');
+      stepOtp.classList.remove('hidden');
+
+    } catch (err) {
+      showError(errorPhone, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Kirim Kode OTP';
+    }
+  });
+
+  // STEP 2 -> Verifikasi OTP
+  document.getElementById('btn-verify-otp').addEventListener('click', async () => {
+    const otpCode = document.getElementById('input-otp').value.trim();
+    hideError(errorOtp);
+
+    if (!otpCode) {
+      showError(errorOtp, 'Kode OTP wajib diisi.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-verify-otp');
+    btn.disabled = true;
+    btn.textContent = 'Memverifikasi...';
+
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ no_hp: currentPhone, otp_code: otpCode, role: 'kru' })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(errorOtp, data.error || 'Kode OTP salah atau kadaluarsa.');
+        btn.disabled = false;
+        btn.textContent = 'Verifikasi & Masuk';
+        return;
+      }
+
+      // Simpan ke localStorage
+      localStorage.setItem('crew247_user_id', data.data.user_id);
+      localStorage.setItem('crew247_no_hp', data.data.no_hp);
+
+      document.getElementById('result-user-id').textContent = data.data.user_id;
+      document.getElementById('result-no-hp').textContent = data.data.no_hp;
+
+      stepOtp.classList.add('hidden');
+      stepSuccess.classList.remove('hidden');
+
+    } catch (err) {
+      showError(errorOtp, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Verifikasi & Masuk';
+    }
+  });
+</script>
+
+</body>
+</html> 
