@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew247.id - Dashboard Kru</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #12141a; color: #eef0f4; margin: 0; padding: 20px; min-height: 100vh;
+    }
+    .wrap { max-width: 560px; margin: 0 auto; }
+    .header-card {
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px;
+      padding: 22px 20px; margin-bottom: 18px; text-align: center;
+    }
+    h1 { color: #e9a23b; font-size: 21px; margin: 0 0 6px; }
+    p.sub { color: #9aa2b1; font-size: 13.5px; margin: 0; line-height: 1.5; }
+    a { color: #e9a23b; }
+    .offer-card {
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 14px;
+      padding: 18px; margin-bottom: 14px;
+    }
+    .offer-title { font-weight: 700; font-size: 16px; margin-bottom: 4px; }
+    .offer-detail { font-size: 13px; color: #9aa2b1; margin-bottom: 3px; }
+    .offer-detail b { color: #eef0f4; }
+    .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+    .btn-row button {
+      flex: 1; border: none; padding: 11px; border-radius: 9px; font-weight: 700;
+      font-size: 13.5px; cursor: pointer;
+    }
+    .btn-terima { background: #37c98f; color: #0a2318; }
+    .btn-terima:hover { filter: brightness(1.05); }
+    .btn-tolak { background: transparent; border: 1px solid #4a2a20 !important; color: #f0725c; }
+    .btn-tolak:hover { background: #2b1712; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .empty-state {
+      text-align: center; padding: 40px 20px; color: #9aa2b1; font-size: 13.5px;
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 14px;
+    }
+    .toast {
+      background: #12271f; border: 1px solid #1e4635; color: #5fd996; padding: 10px 14px;
+      border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="header-card hidden" id="state-no-login">
+      <h1>Akses Ditolak</h1>
+      <p class="sub">Anda belum masuk ke dalam sistem Crew247.id.</p>
+      <a href="/login.html">Silakan login dulu di sini &rarr;</a>
+    </div>
+
+    <div id="state-content" class="hidden">
+      <div class="header-card">
+        <h1>Dashboard Kru</h1>
+        <p class="sub">Kelola tawaran gig masuk yang sedang menunggu respons Anda.</p>
+      </div>
+
+      <div id="toast" class="toast"></div>
+
+      <div id="offers-container"></div>
+    </div>
+
+  </div>
+
+<script>
+  const userId = localStorage.getItem('crew247_user_id');
+  const stateNoLogin = document.getElementById('state-no-login');
+  const stateContent = document.getElementById('state-content');
+  const offersContainer = document.getElementById('offers-container');
+  const toast = document.getElementById('toast');
+
+  if (!userId) {
+    stateNoLogin.classList.remove('hidden');
+  } else {
+    stateContent.classList.remove('hidden');
+    loadOffers();
+  }
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+  }
+
+  function fmtRupiah(angka) {
+    return 'Rp ' + Number(angka).toLocaleString('id-ID');
+  }
+  function fmtTanggal(d) {
+    const dt = new Date(d + 'T00:00:00');
+    return dt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  async function loadOffers() {
+    offersContainer.innerHTML = '<div class="empty-state">Memuat tawaran...</div>';
+
+    try {
+      const res = await fetch('/api/applications/crew/' + userId);
+      const data = await res.json();
+
+      if (!res.ok) {
+        offersContainer.innerHTML = `<div class="empty-state">Gagal memuat tawaran.</div>`;
+        return;
+      }
+
+      if (data.data.length === 0) {
+        offersContainer.innerHTML = `<div class="empty-state">Belum ada tawaran gig yang menunggu respons Anda.</div>`;
+        return;
+      }
+
+      offersContainer.innerHTML = data.data.map(renderOfferCard).join('');
+
+      document.querySelectorAll('.btn-terima').forEach(btn => {
+        btn.addEventListener('click', () => respond(btn.dataset.appId, 'diterima'));
+      });
+      document.querySelectorAll('.btn-tolak').forEach(btn => {
+        btn.addEventListener('click', () => respond(btn.dataset.appId, 'ditolak'));
+      });
+
+    } catch (err) {
+      offersContainer.innerHTML = `<div class="empty-state">Tidak bisa terhubung ke server.</div>`;
+    }
+  }
+
+  function renderOfferCard(offer) {
+    return `
+      <div class="offer-card" id="offer-${offer.application_id}">
+        <div class="offer-title">${offer.nama_acara}</div>
+        <div class="offer-detail"><b>Posisi:</b> ${offer.posisi}</div>
+        <div class="offer-detail"><b>Tanggal:</b> ${fmtTanggal(offer.tanggal_mulai)} - ${fmtTanggal(offer.tanggal_selesai)}</div>
+        <div class="offer-detail"><b>Lokasi:</b> ${offer.lokasi}, ${offer.kota}</div>
+        <div class="offer-detail"><b>Budget:</b> ${fmtRupiah(offer.budget_per_orang)}</div>
+        <div class="btn-row">
+          <button class="btn-terima" data-app-id="${offer.application_id}">Terima</button>
+          <button class="btn-tolak" data-app-id="${offer.application_id}">Tolak</button>
+        </div>
+      </div>
+    `;
+  }
+
+  async function respond(applicationId, keputusan) {
+    const card = document.getElementById('offer-' + applicationId);
+    const buttons = card.querySelectorAll('button');
+    buttons.forEach(b => b.disabled = true);
+
+    try {
+      const res = await fetch(`/api/applications/${applicationId}/respond`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_keputusan: keputusan })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Gagal mengirim respons.');
+        buttons.forEach(b => b.disabled = false);
+        return;
+      }
+
+      showToast(keputusan === 'diterima' ? 'Tawaran diterima! Jadwal Anda sudah terkunci.' : 'Tawaran ditolak.');
+      card.remove();
+
+      // Kalau setelah dihapus tidak ada kartu tersisa, tampilkan empty state
+      if (offersContainer.children.length === 0) {
+        offersContainer.innerHTML = `<div class="empty-state">Belum ada tawaran gig yang menunggu respons Anda.</div>`;
+      }
+
+    } catch (err) {
+      alert('Tidak bisa terhubung ke server.');
+      buttons.forEach(b => b.disabled = false);
+    }
+  }
+</script>
+
+</body>
+</html>

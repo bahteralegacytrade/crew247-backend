@@ -8,11 +8,7 @@
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #12141a;
-      color: #eef0f4;
-      margin: 0;
-      padding: 20px;
-      min-height: 100vh;
+      background: #12141a; color: #eef0f4; margin: 0; padding: 20px; min-height: 100vh;
     }
     .wrap { max-width: 640px; margin: 0 auto; }
     .header-card {
@@ -47,6 +43,10 @@
       padding: 10px 14px; font-size: 13px; color: #9aa2b1; margin-bottom: 16px; display: none;
     }
     .meta-info b { color: #eef0f4; }
+    .no-position-note {
+      background: #22262f; border: 1px dashed #2c313c; border-radius: 9px;
+      padding: 10px 14px; font-size: 12.5px; color: #9aa2b1; margin-bottom: 16px;
+    }
     .crew-card {
       background: #1b1e27; border: 1px solid #2c313c; border-radius: 14px;
       padding: 16px; margin-bottom: 12px;
@@ -55,17 +55,19 @@
     .crew-name { font-weight: 700; font-size: 15px; }
     .crew-role { font-size: 12.5px; color: #9aa2b1; margin-top: 2px; }
     .crew-meta { font-size: 11.5px; color: #9aa2b1; margin-top: 4px; }
-    .rate {
-      font-weight: 700; font-size: 14px; color: #e9a23b; white-space: nowrap;
-    }
+    .rate { font-weight: 700; font-size: 14px; color: #e9a23b; white-space: nowrap; text-align: right; }
     .tags { margin-top: 10px; }
     .tag {
       display: inline-block; background: #22262f; border: 1px solid #2c313c; color: #9aa2b1;
       font-size: 10.5px; padding: 3px 8px; border-radius: 6px; margin: 2px 4px 0 0;
     }
-    .empty-state {
-      text-align: center; padding: 40px 20px; color: #9aa2b1; font-size: 13.5px;
+    .empty-state { text-align: center; padding: 40px 20px; color: #9aa2b1; font-size: 13.5px; }
+    .btn-pilih {
+      margin-top: 12px; background: #e9a23b; color: #3a2506; border: none; padding: 10px;
+      border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; width: 100%;
     }
+    .btn-pilih:disabled { background: #22262f; color: #5fd996; opacity: 1; cursor: default; }
+    .no-job-text { margin-top: 10px; font-size: 11.5px; color: #6b7078; font-style: italic; }
     .hidden { display: none; }
   </style>
 </head>
@@ -106,6 +108,10 @@
       <button id="btn-cari">Cari Kru Tersedia</button>
     </div>
 
+    <div id="no-position-note" class="no-position-note hidden">
+      ℹ️ Buka halaman ini dari <b>Posting Event</b> untuk bisa memilih kru langsung.
+    </div>
+
     <div id="meta-info" class="meta-info"></div>
 
     <div id="results-container"></div>
@@ -116,6 +122,7 @@
   const errorBox = document.getElementById('error-box');
   const metaInfo = document.getElementById('meta-info');
   const resultsContainer = document.getElementById('results-container');
+  const noPositionNote = document.getElementById('no-position-note');
 
   function showError(msg) {
     errorBox.textContent = msg;
@@ -128,15 +135,18 @@
     return 'Rp ' + Number(angka).toLocaleString('id-ID');
   }
 
-  // Isi otomatis dari query parameter URL (kalau datang dari redirect posting-event.html)
   const params = new URLSearchParams(window.location.search);
   const qMulai = params.get('tanggal_mulai');
   const qSelesai = params.get('tanggal_selesai');
+  const jobPositionId = params.get('job_position_id'); // bisa null
 
   if (qMulai) document.getElementById('tanggal_mulai').value = qMulai;
   if (qSelesai) document.getElementById('tanggal_selesai').value = qSelesai;
 
-  // Kalau sudah ada tanggal dari URL, langsung cari otomatis
+  if (!jobPositionId) {
+    noPositionNote.classList.remove('hidden');
+  }
+
   if (qMulai && qSelesai) {
     cariKru();
   }
@@ -177,7 +187,6 @@
         return;
       }
 
-      // Tampilkan info transparansi
       const totalTersedia = data.meta.total_kru_tersedia;
       const totalDisembunyikan = data.meta.total_kru_disembunyikan_karena_bentrok;
       const totalKeseluruhan = totalTersedia + totalDisembunyikan;
@@ -189,6 +198,10 @@
         resultsContainer.innerHTML = `<div class="empty-state">Tidak ada kru tersedia di tanggal ini. Coba tanggal atau filter lain.</div>`;
       } else {
         resultsContainer.innerHTML = data.data.map(renderCrewCard).join('');
+        // Pasang event listener untuk tiap tombol "Pilih Kru" setelah render
+        document.querySelectorAll('.btn-pilih').forEach(btn => {
+          btn.addEventListener('click', () => pilihKru(btn));
+        });
       }
 
       btn.disabled = false;
@@ -203,6 +216,14 @@
 
   function renderCrewCard(crew) {
     const tags = (crew.keahlian || []).map(k => `<span class="tag">${k}</span>`).join('');
+
+    let actionHtml = '';
+    if (jobPositionId) {
+      actionHtml = `<button class="btn-pilih" data-crew-id="${crew.user_id}">⚡ Pilih Kru</button>`;
+    } else {
+      actionHtml = `<div class="no-job-text">Buka dari halaman posting event untuk memilih kru.</div>`;
+    }
+
     return `
       <div class="crew-card">
         <div class="crew-top">
@@ -214,8 +235,43 @@
           <div class="rate">${fmtRupiah(crew.rate_harian)}<br><span style="font-size:10px; font-weight:400; color:#9aa2b1;">/hari</span></div>
         </div>
         <div class="tags">${tags}</div>
+        ${actionHtml}
       </div>
     `;
+  }
+
+  async function pilihKru(btn) {
+    const crewId = btn.getAttribute('data-crew-id');
+    btn.disabled = true;
+    btn.textContent = 'Mengirim...';
+
+    try {
+      const res = await fetch('/api/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          job_position_id: jobPositionId,
+          crew_id: crewId,
+          sumber: 'colek_langsung'
+        })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || 'Gagal mengirim tawaran ke kru ini.');
+        btn.disabled = false;
+        btn.textContent = '⚡ Pilih Kru';
+        return;
+      }
+
+      btn.textContent = '✓ Menunggu Respons Kru';
+      // Tetap disabled, tidak dikembalikan ke enabled
+
+    } catch (err) {
+      alert('Tidak bisa terhubung ke server.');
+      btn.disabled = false;
+      btn.textContent = '⚡ Pilih Kru';
+    }
   }
 </script>
 

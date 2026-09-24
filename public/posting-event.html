@@ -8,22 +8,12 @@
     * { box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #12141a;
-      color: #eef0f4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      background: #12141a; color: #eef0f4; display: flex; align-items: center;
+      justify-content: center; min-height: 100vh; margin: 0; padding: 20px;
     }
     .card {
-      background: #1b1e27;
-      border: 1px solid #2c313c;
-      border-radius: 16px;
-      padding: 28px 24px;
-      width: 100%;
-      max-width: 460px;
+      background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px;
+      padding: 28px 24px; width: 100%; max-width: 460px;
     }
     h1 { color: #e9a23b; font-size: 21px; margin: 0 0 6px; }
     h3 { font-size: 13px; text-transform: uppercase; color: #9aa2b1; margin: 22px 0 10px; }
@@ -70,14 +60,12 @@
 </head>
 <body>
 
-  <!-- STATE: Belum login -->
   <div class="card" id="state-no-login">
     <h1>Akses Ditolak</h1>
     <p class="sub">Anda belum masuk ke dalam sistem Crew247.id sebagai pembuat event.</p>
     <a href="/login.html">&larr; Silakan login dulu di sini</a>
   </div>
 
-  <!-- STATE: Form -->
   <div class="card hidden" id="state-form">
     <h1>Posting Kebutuhan Kru</h1>
     <p class="sub">Buat lowongan acara baru dan tentukan posisi kru yang Anda perlukan.</p>
@@ -226,8 +214,11 @@
         return;
       }
 
-      // Redirect ke direktori dengan tanggal yang baru diinput
-      window.location.href = `/direktori.html?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`;
+      // Ambil job_position_id dari posisi PERTAMA yang berhasil dibuat
+      const firstPositionId = data.data.posisi[0].id;
+
+      // Redirect ke direktori dengan tanggal + job_position_id
+      window.location.href = `/direktori.html?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}&job_position_id=${firstPositionId}`;
 
     } catch (err) {
       showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
