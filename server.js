@@ -1,31 +1,25 @@
 const express = require('express');
-require('dotenv').config();
-
 const app = express();
-app.use(express.json()); // supaya server bisa baca data JSON yang dikirim dari aplikasi
-
-const authRoutes = require('./routes/auth');
-app.use(authRoutes);
-
-const crewRoutes = require('./routes/crew');
-app.use(crewRoutes);
-
 const PORT = process.env.PORT || 3000;
+
+// Middleware untuk membaca format JSON dari request body
+app.use(express.json());
+
+// --- PENYEDIAAN HALAMAN FRONTEND (STATIC FILES) ---
+// Menyajikan semua file yang ada di dalam folder 'public' langsung ke browser
+app.use(express.static('public'));
+
+// --- PENDAFTARAN ROUTER BACKEND API YANG SUDAH DIBUAT ---
+// Pastikan path require ini sesuai dengan struktur folder Anda
+app.use(require('./routes/auth'));
+app.use(require('./routes/crew'));
+app.use(require('./routes/schedule'));
+app.use(require('./routes/directory'));
+app.use(require('./routes/events'));
+app.use(require('./routes/applications'));
+app.use(require('./routes/ratings'));
+
+// Jalankan server di port 3000
 app.listen(PORT, () => {
-  console.log(`Crew247.id backend jalan di http://localhost:${PORT}`);
+    console.log(`[Crew247.id] Server utama berjalan di http://localhost:3000`);
 });
-
-const scheduleRoutes = require('./routes/schedule');
-app.use(scheduleRoutes);
-
-const directoryRoutes = require('./routes/directory');
-app.use(directoryRoutes);
-
-const eventsRoutes = require('./routes/events');
-app.use(eventsRoutes);
-
-const applicationsRoutes = require('./routes/applications');
-app.use(applicationsRoutes);
-
-const ratingsRoutes = require('./routes/ratings');
-app.use(ratingsRoutes);

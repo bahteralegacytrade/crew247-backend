@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew247.id - Profil & CV Digital Kru</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #12141a;
+      color: #eef0f4;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #1b1e27;
+      border: 1px solid #2c313c;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 420px;
+    }
+    h1 {
+      color: #e9a23b;
+      font-size: 21px;
+      margin: 0 0 6px;
+    }
+    p.sub {
+      color: #9aa2b1;
+      font-size: 13.5px;
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+    a { color: #e9a23b; }
+    label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #9aa2b1;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    input, select, textarea {
+      width: 100%;
+      background: #22262f;
+      border: 1px solid #2c313c;
+      color: #eef0f4;
+      padding: 11px 13px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #e9a23b;
+      outline-offset: 1px;
+    }
+    button {
+      width: 100%;
+      background: #e9a23b;
+      color: #3a2506;
+      border: none;
+      padding: 13px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+    button:hover { filter: brightness(1.05); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-box {
+      background: #2b1712;
+      border: 1px solid #4a2a20;
+      color: #f0725c;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .success-box {
+      background: #12271f;
+      border: 1px solid #1e4635;
+      color: #5fd996;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .hidden { display: none; }
+    .link-btn {
+      display: block;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13.5px;
+      color: #9aa2b1;
+      text-decoration: none;
+    }
+    .link-btn:hover { color: #e9a23b; }
+  </style>
+</head>
+<body>
+
+  <div style="max-width:640px; margin:0 auto 10px;"><a href="/index.html" style="color:#9aa2b1; font-size:13px; text-decoration:none;">← Beranda</a></div>
+
+  <!-- STATE: Belum login -->
+  <div class="card hidden" id="state-no-login">
+    <h1>Akses Ditolak</h1>
+    <p class="sub">Anda belum masuk ke dalam sistem Crew247.id.</p>
+    <a href="/login.html">Silakan login dulu di sini &rarr;</a>
+  </div>
+
+  <!-- STATE: Form profil -->
+  <div class="card hidden" id="state-form">
+    <h1 id="form-title">Lengkapi CV Digital</h1>
+    <p class="sub">Buat profil profesional Anda agar pembuat event dapat menemukan Anda.</p>
+
+    <div id="error-box" class="error-box"></div>
+    <div id="success-box" class="success-box"></div>
+
+    <form id="profile-form">
+      <label>Nama Lengkap *</label>
+      <input type="text" id="nama_lengkap" required>
+
+      <label>Nama Panggung / Panggilan *</label>
+      <input type="text" id="nama_panggung" required>
+
+      <label>Peran Utama *</label>
+      <select id="peran_utama" required>
+        <option value="">-- Pilih Peran --</option>
+        <option value="FOH Audio Engineer">FOH Audio Engineer</option>
+        <option value="Monitor Engineer">Monitor Engineer</option>
+        <option value="Lighting Designer">Lighting Designer</option>
+        <option value="Stage Manager">Stage Manager</option>
+        <option value="Backline Tech">Backline Tech</option>
+        <option value="VJ & LED Tech">VJ & LED Tech</option>
+      </select>
+
+      <label>Kota Domisili *</label>
+      <input type="text" id="kota" required>
+
+      <label>Rate Harian (IDR) *</label>
+      <input type="number" id="rate_harian" required>
+
+      <label>Pengalaman (Tahun) *</label>
+      <input type="number" id="pengalaman_tahun">
+
+      <label>Keahlian Alat / Software (dipisah koma)</label>
+      <input type="text" id="keahlian" placeholder="Yamaha CL5, DiGiCo SD Series">
+
+      <label>Bio Singkat / Deskripsi Profesional</label>
+      <textarea id="bio"></textarea>
+
+      <label>URL Foto Profil (opsional)</label>
+      <input type="text" id="foto_url" placeholder="https://...">
+
+      <button type="submit" id="btn-submit">Simpan Profil</button>
+    </form>
+
+    <a href="#" class="link-btn">&larr; Menuju Dashboard (Segera Hadir)</a>
+  </div>
+
+<script>
+  const userId = localStorage.getItem('crew247_user_id');
+
+  const stateNoLogin = document.getElementById('state-no-login');
+  const stateForm = document.getElementById('state-form');
+  const errorBox = document.getElementById('error-box');
+  const successBox = document.getElementById('success-box');
+  const formTitle = document.getElementById('form-title');
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+    successBox.style.display = 'none';
+  }
+  function showSuccess(msg) {
+    successBox.textContent = msg;
+    successBox.style.display = 'block';
+    errorBox.style.display = 'none';
+  }
+
+  if (!userId) {
+    // Belum login
+    stateNoLogin.classList.remove('hidden');
+  } else {
+    // Sudah login, tampilkan form
+    stateForm.classList.remove('hidden');
+    loadExistingProfile();
+  }
+
+  async function loadExistingProfile() {
+    try {
+      const res = await fetch('/api/crew/profile/' + userId);
+
+      if (res.status === 404) {
+        // Belum ada profil, mode buat baru -> form tetap kosong
+        formTitle.textContent = 'Lengkapi CV Digital';
+        return;
+      }
+
+      if (!res.ok) {
+        showError('Gagal memuat data profil.');
+        return;
+      }
+
+      const result = await res.json();
+      const data = result.data;
+
+      // Mode edit -> isi form dengan data yang sudah ada
+      formTitle.textContent = 'Edit CV Digital';
+      document.getElementById('nama_lengkap').value = data.nama_lengkap || '';
+      document.getElementById('nama_panggung').value = data.nama_panggung || '';
+      document.getElementById('peran_utama').value = data.peran_utama || '';
+      document.getElementById('kota').value = data.kota || '';
+      document.getElementById('rate_harian').value = data.rate_harian || '';
+      document.getElementById('pengalaman_tahun').value = data.pengalaman_tahun || '';
+      document.getElementById('keahlian').value = (data.keahlian || []).join(', ');
+      document.getElementById('bio').value = data.bio || '';
+      document.getElementById('foto_url').value = data.foto_url || '';
+
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+    }
+  }
+
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+    successBox.style.display = 'none';
+
+    const keahlianArray = document.getElementById('keahlian').value
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    const payload = {
+      user_id: userId,
+      nama_lengkap: document.getElementById('nama_lengkap').value.trim(),
+      nama_panggung: document.getElementById('nama_panggung').value.trim(),
+      peran_utama: document.getElementById('peran_utama').value,
+      kota: document.getElementById('kota').value.trim(),
+      rate_harian: parseInt(document.getElementById('rate_harian').value) || 0,
+      pengalaman_tahun: parseInt(document.getElementById('pengalaman_tahun').value) || 0,
+      keahlian: keahlianArray,
+      bio: document.getElementById('bio').value.trim(),
+      foto_url: document.getElementById('foto_url').value.trim() || null
+    };
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/crew/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Gagal menyimpan profil.');
+        btn.disabled = false;
+        btn.textContent = 'Simpan Profil';
+        return;
+      }
+
+      showSuccess('Profil berhasil disimpan! CV digital Anda sudah aktif di Crew247.id.');
+      formTitle.textContent = 'Edit CV Digital';
+      btn.disabled = false;
+      btn.textContent = 'Simpan Profil';
+
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Simpan Profil';
+    }
+  });
+</script>
+
+</body>
+</html>

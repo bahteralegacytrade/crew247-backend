@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crew247.id - Login / Pendaftaran Kru</title>
+  <title>Crew247.id - Login / Pendaftaran</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -92,20 +92,73 @@
       word-break: break-all;
       margin-top: 12px;
     }
+    /* Role picker */
+    .role-option {
+      background: #22262f;
+      border: 1px solid #2c313c;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .role-option:hover { border-color: #e9a23b; }
+    .role-option .role-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+    .role-option .role-desc { font-size: 12.5px; color: #9aa2b1; }
+    .role-badge {
+      display: inline-block;
+      background: #22262f;
+      border: 1px solid #2c313c;
+      color: #e9a23b;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 100px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+    }
+    .link-back {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 13px;
+      color: #9aa2b1;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .link-back:hover { color: #e9a23b; }
   </style>
 </head>
 <body>
 
   <div class="card">
 
+    <!-- STEP 0: Pilih peran -->
+    <div id="step-role">
+      <h1>Masuk ke Crew247.id</h1>
+      <p class="sub">Pilih peran Anda untuk melanjutkan.</p>
+
+      <div class="role-option" id="role-kru">
+        <div class="role-title">🎧 Saya Kru Panggung</div>
+        <div class="role-desc">Daftar/masuk untuk mengelola profil & jadwal Anda.</div>
+      </div>
+
+      <div class="role-option" id="role-event">
+        <div class="role-title">📋 Saya Pembuat Event</div>
+        <div class="role-desc">Daftar/masuk untuk mencari & memilih kru.</div>
+      </div>
+    </div>
+
     <!-- STEP 1: Input nomor HP -->
-    <div id="step-phone">
-      <h1>Masuk / Daftar Kru</h1>
+    <div id="step-phone" class="hidden">
+      <span class="role-badge" id="role-badge-phone"></span>
+      <h1>Masuk / Daftar</h1>
       <p class="sub">Masukkan nomor WhatsApp Anda untuk menerima kode verifikasi OTP.</p>
       <div id="error-phone" class="error-box"></div>
       <label>Nomor WhatsApp</label>
       <input type="text" id="input-phone" placeholder="628123456789">
       <button id="btn-send-otp">Kirim Kode OTP</button>
+      <a class="link-back" id="btn-back-to-role">&larr; Ganti peran</a>
     </div>
 
     <!-- STEP 2: Input OTP -->
@@ -122,10 +175,11 @@
     <div id="step-success" class="hidden">
       <div class="success-icon">🎉</div>
       <h1 style="text-align:center;">Berhasil Masuk!</h1>
-      <p class="sub" style="text-align:center;">Autentikasi Crew247.id Anda berhasil terverifikasi.</p>
+      <p class="sub" style="text-align:center;">Autentikasi Crew247.id Anda berhasil terverifikasi sebagai <b id="role-display-success"></b>.</p>
       <div class="success-detail">
         <div><b>User ID:</b> <span id="result-user-id"></span></div>
         <div style="margin-top:4px;"><b>No. HP:</b> <span id="result-no-hp"></span></div>
+        <a href="/index.html" style="display:block; text-align:center; background:#e9a23b; color:#3a2506; padding:13px; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; margin-top:16px;">Lanjut ke Beranda →</a>
       </div>
     </div>
 
@@ -133,7 +187,9 @@
 
 <script>
   let currentPhone = '';
+  let selectedRole = ''; // 'kru' atau 'pembuat_event'
 
+  const stepRole = document.getElementById('step-role');
   const stepPhone = document.getElementById('step-phone');
   const stepOtp = document.getElementById('step-otp');
   const stepSuccess = document.getElementById('step-success');
@@ -148,6 +204,27 @@
   function hideError(el) {
     el.style.display = 'none';
   }
+
+  function roleLabel(role) {
+    return role === 'kru' ? 'Kru Panggung' : 'Pembuat Event';
+  }
+
+  // STEP 0 -> Pilih peran
+  document.getElementById('role-kru').addEventListener('click', () => selectRole('kru'));
+  document.getElementById('role-event').addEventListener('click', () => selectRole('pembuat_event'));
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('role-badge-phone').textContent = roleLabel(role);
+    stepRole.classList.add('hidden');
+    stepPhone.classList.remove('hidden');
+  }
+
+  document.getElementById('btn-back-to-role').addEventListener('click', () => {
+    stepPhone.classList.add('hidden');
+    stepRole.classList.remove('hidden');
+    hideError(errorPhone);
+  });
 
   // STEP 1 -> Kirim OTP
   document.getElementById('btn-send-otp').addEventListener('click', async () => {
@@ -167,7 +244,7 @@
       const res = await fetch('/api/auth/otp/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ no_hp: phone, role: 'kru' })
+        body: JSON.stringify({ no_hp: phone, role: selectedRole })
       });
       const data = await res.json();
 
@@ -182,6 +259,9 @@
       document.getElementById('phone-display').textContent = phone;
       stepPhone.classList.add('hidden');
       stepOtp.classList.remove('hidden');
+
+      btn.disabled = false;
+      btn.textContent = 'Kirim Kode OTP';
 
     } catch (err) {
       showError(errorPhone, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
@@ -208,7 +288,7 @@
       const res = await fetch('/api/auth/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ no_hp: currentPhone, otp_code: otpCode, role: 'kru' })
+        body: JSON.stringify({ no_hp: currentPhone, otp_code: otpCode, role: selectedRole })
       });
       const data = await res.json();
 
@@ -219,12 +299,14 @@
         return;
       }
 
-      // Simpan ke localStorage
+      // Simpan ke localStorage, TERMASUK peran
       localStorage.setItem('crew247_user_id', data.data.user_id);
       localStorage.setItem('crew247_no_hp', data.data.no_hp);
+      localStorage.setItem('crew247_role', data.data.role);
 
       document.getElementById('result-user-id').textContent = data.data.user_id;
       document.getElementById('result-no-hp').textContent = data.data.no_hp;
+      document.getElementById('role-display-success').textContent = roleLabel(data.data.role);
 
       stepOtp.classList.add('hidden');
       stepSuccess.classList.remove('hidden');
@@ -238,4 +320,4 @@
 </script>
 
 </body>
-</html> 
+</html>

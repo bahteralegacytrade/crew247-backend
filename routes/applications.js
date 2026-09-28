@@ -20,6 +20,14 @@ router.post('/api/applications', async (req, res) => {
             return res.status(404).json({ error: 'Posisi pekerjaan tidak ditemukan.' });
         }
 
+                const dup = await pool.query(
+            `SELECT 1 FROM applications WHERE job_position_id = $1 AND crew_id = $2 AND status IN ('menunggu','diterima')`,
+            [job_position_id, crew_id]
+        );
+        if (dup.rows.length > 0) {
+            return res.status(409).json({ error: 'Kru ini sudah dipilih/ditawari untuk posisi ini.' });
+        }
+
         const insertQuery = `
             INSERT INTO applications (job_position_id, crew_id, sumber, status, created_at, updated_at)
             VALUES ($1, $2, $3, 'menunggu', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)

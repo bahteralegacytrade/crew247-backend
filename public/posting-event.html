@@ -60,7 +60,9 @@
 </head>
 <body>
 
-  <div class="card" id="state-no-login">
+  <div style="max-width:640px; margin:0 auto 10px;"><a href="/index.html" style="color:#9aa2b1; font-size:13px; text-decoration:none;">← Beranda</a></div>
+  
+  <div class="card hidden" id="state-no-login">
     <h1>Akses Ditolak</h1>
     <p class="sub">Anda belum masuk ke dalam sistem Crew247.id sebagai pembuat event.</p>
     <a href="/login.html">&larr; Silakan login dulu di sini</a>
@@ -123,13 +125,6 @@
   const errorBox = document.getElementById('error-box');
   const positionsContainer = document.getElementById('positions-container');
 
-  if (!userId) {
-    stateNoLogin.classList.remove('hidden');
-  } else {
-    stateForm.classList.remove('hidden');
-    addPositionRow();
-  }
-
   function showError(msg) {
     errorBox.textContent = msg;
     errorBox.style.display = 'block';
@@ -165,6 +160,15 @@
     });
 
     positionsContainer.appendChild(row);
+  }
+
+  // Baris ini sekarang aman dipanggil, karena PERAN_OPTIONS & addPositionRow
+  // sudah didefinisikan lebih dulu di atas.
+  if (!userId) {
+    stateNoLogin.classList.remove('hidden');
+  } else {
+    stateForm.classList.remove('hidden');
+    addPositionRow();
   }
 
   document.getElementById('btn-add-position').addEventListener('click', addPositionRow);
@@ -214,10 +218,8 @@
         return;
       }
 
-      // Ambil job_position_id dari posisi PERTAMA yang berhasil dibuat
       const firstPositionId = data.data.posisi[0].id;
 
-      // Redirect ke direktori dengan tanggal + job_position_id
       window.location.href = `/direktori.html?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}&job_position_id=${firstPositionId}`;
 
     } catch (err) {

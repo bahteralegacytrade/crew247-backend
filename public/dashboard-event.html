@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crew247.id - Dashboard Event</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #12141a; color: #eef0f4; margin: 0; padding: 20px; min-height: 100vh; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  .back { color: #9aa2b1; font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 10px; }
+  .box { background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px; padding: 20px; margin-bottom: 14px; }
+  h1 { color: #e9a23b; font-size: 21px; margin: 0 0 4px; }
+  .sub { color: #9aa2b1; font-size: 13.5px; margin: 0; line-height: 1.5; }
+  a { color: #e9a23b; }
+  .ev-title { font-weight: 700; font-size: 16.5px; }
+  .ev-meta { font-size: 12.5px; color: #9aa2b1; margin-top: 3px; }
+  .badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 100px; text-transform: uppercase; }
+  .b-menunggu { background: #33270c; color: #e9a23b; }
+  .b-diterima { background: #12271f; color: #37c98f; }
+  .b-ditolak { background: #2b1712; color: #f0725c; }
+  .b-abu { background: #22262f; color: #9aa2b1; }
+  .pos { background: #22262f; border: 1px solid #2c313c; border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+  .pos-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; font-weight: 600; }
+  .pos-sub { font-size: 12px; color: #9aa2b1; margin-top: 2px; }
+  .app-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid #2c313c; font-size: 13px; margin-top: 8px; }
+  .app-row:first-of-type { margin-top: 10px; }
+  .app-name { font-weight: 600; }
+  .app-sumber { font-size: 11px; color: #9aa2b1; }
+  .btn { border: none; border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn-pick { background: #e9a23b; color: #3a2506; margin-top: 10px; }
+  .btn-cancel { background: transparent; border: 1px solid #4a2a20; color: #f0725c; padding: 5px 9px; font-size: 11.5px; }
+  .full { font-size: 12px; color: #37c98f; margin-top: 10px; }
+  .empty { text-align: center; color: #9aa2b1; font-size: 13.5px; padding: 30px 10px; }
+  .toast { background: #12271f; border: 1px solid #1e4635; color: #5fd996; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/index.html">← Beranda</a>
+
+  <div class="box hidden" id="state-no-login">
+    <h1>Akses Ditolak</h1>
+    <p class="sub" id="no-login-msg">Anda belum masuk ke dalam sistem Crew247.id.</p>
+    <p class="sub" style="margin-top:10px;"><a href="/login.html">Silakan login dulu di sini →</a></p>
+  </div>
+
+  <div id="state-content" class="hidden">
+    <div class="box" style="text-align:center;">
+      <h1>Dashboard Event</h1>
+      <p class="sub">Pantau event yang Anda posting, posisi yang dibutuhkan, dan status tiap pelamar.</p>
+      <p style="margin:14px 0 0;"><a class="btn btn-pick" style="margin-top:0;" href="/posting-event.html">+ Posting Event Baru</a></p>
+    </div>
+    <div id="toast" class="toast"></div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+  const userId = localStorage.getItem('crew247_user_id');
+  const role = localStorage.getItem('crew247_role');
+  const list = document.getElementById('list');
+  const toast = document.getElementById('toast');
+  const today = new Date().toISOString().split('T')[0];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function rp(n) { return 'Rp ' + Number(n).toLocaleString('id-ID'); }
+  function tgl(d) { return new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); }
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 4000);
+  }
+
+  // Status tampilan: 'menunggu' lebih dari 24 jam dianggap kedaluwarsa
+  function statusView(a) {
+    let s = a.status;
+    if (s === 'menunggu' && (Date.now() - new Date(a.created_at).getTime()) > 24 * 3600 * 1000) s = 'expired';
+    const map = {
+      menunggu: ['b-menunggu', 'Menunggu'],
+      diterima: ['b-diterima', 'Diterima'],
+      ditolak: ['b-ditolak', 'Ditolak'],
+      expired: ['b-abu', 'Kedaluwarsa'],
+      dibatalkan: ['b-abu', 'Dibatalkan']
+    };
+    return map[s] || ['b-abu', s];
+  }
+
+  function renderPelamar(a, past) {
+    const [cls, label] = statusView(a);
+    const cancelBtn = (a.status === 'diterima' && !past)
+      ? `<button class="btn btn-cancel" data-cancel="${esc(a.id)}">Batalkan</button>` : '';
+    return `
+      <div class="app-row">
+        <div>
+          <div class="app-name">${esc(a.nama_lengkap)} <span style="font-weight:400;color:#9aa2b1;">(${esc(a.nama_panggung)})</span></div>
+          <div class="app-sumber">${a.sumber === 'colek_langsung' ? 'Dipilih langsung' : 'Melamar'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="badge ${cls}">${label}</span>${cancelBtn}</div>
+      </div>`;
+  }
+
+  function renderPosisi(ev, p, past) {
+    const penuh = p.jumlah_terisi >= p.jumlah_dibutuhkan;
+    let aksi = '';
+    if (past) aksi = '';
+    else if (penuh) aksi = '<div class="full">✓ Slot terpenuhi</div>';
+    else {
+      const url = `/direktori.html?tanggal_mulai=${ev.tanggal_mulai}&tanggal_selesai=${ev.tanggal_selesai}&job_position_id=${p.id}`;
+      aksi = `<a class="btn btn-pick" href="${url}">⚡ Pilih Kru untuk Posisi Ini</a>`;
+    }
+    const pelamar = p.pelamar.length ? p.pelamar.map(a => renderPelamar(a, past)).join('') : '<div class="pos-sub" style="margin-top:8px;">Belum ada kru yang dipilih.</div>';
+    return `
+      <div class="pos">
+        <div class="pos-head"><span>${esc(p.posisi)}</span><span>${p.jumlah_terisi}/${p.jumlah_dibutuhkan} terisi</span></div>
+        <div class="pos-sub">Budget ${rp(p.budget_per_orang)} / orang</div>
+        ${pelamar}
+        ${aksi}
+      </div>`;
+  }
+
+  function renderEvent(ev) {
+    const past = ev.tanggal_selesai < today;
+    return `
+      <div class="box">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
+          <div class="ev-title">${esc(ev.nama_acara)}</div>
+          ${past ? '<span class="badge b-abu">Selesai</span>' : '<span class="badge b-diterima">Aktif</span>'}
+        </div>
+        <div class="ev-meta">${tgl(ev.tanggal_mulai)} - ${tgl(ev.tanggal_selesai)} · ${esc(ev.lokasi)}, ${esc(ev.kota)}</div>
+        ${ev.posisi.map(p => renderPosisi(ev, p, past)).join('')}
+      </div>`;
+  }
+
+  async function load() {
+    list.innerHTML = '<div class="empty">Memuat data...</div>';
+    try {
+      const res = await fetch('/api/events/pembuat/' + userId);
+      const data = await res.json();
+      if (!res.ok) { list.innerHTML = '<div class="empty">Gagal memuat data event.</div>'; return; }
+      list.innerHTML = data.data.length
+        ? data.data.map(renderEvent).join('')
+        : '<div class="empty">Belum ada event yang Anda posting.</div>';
+    } catch (err) {
+      list.innerHTML = '<div class="empty">Tidak bisa terhubung ke server.</div>';
+    }
+  }
+
+  async function cancelApp(id) {
+    if (!confirm('Batalkan gig ini? Jadwal kru akan dibuka kembali.')) return;
+    try {
+      const res = await fetch('/api/applications/' + id + '/cancel', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Gagal membatalkan gig.'); return; }
+      showToast('Gig dibatalkan. Jadwal kru sudah dibuka kembali.');
+      load();
+    } catch (err) { alert('Tidak bisa terhubung ke server.'); }
+  }
+
+  list.addEventListener('click', e => {
+    const b = e.target.closest('[data-cancel]');
+    if (b) cancelApp(b.dataset.cancel);
+  });
+
+  // Inisialisasi (dipanggil setelah semua fungsi didefinisikan)
+  if (!userId) {
+    document.getElementById('state-no-login').classList.remove('hidden');
+  } else if (role && role !== 'pembuat_event') {
+    document.getElementById('no-login-msg').textContent = 'Halaman ini khusus akun Pembuat Event.';
+    document.getElementById('state-no-login').classList.remove('hidden');
+  } else {
+    document.getElementById('state-content').classList.remove('hidden');
+    load();
+  }
+</script>
+</body>
+</html>

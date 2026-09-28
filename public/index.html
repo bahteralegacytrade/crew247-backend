@@ -3,26 +3,142 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crew247.id - Setup Frontend</title>
+  <title>Crew247.id - Beranda</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       background: #12141a;
       color: #eef0f4;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
-      text-align: center;
+      padding: 20px;
     }
-    h1 { color: #e9a23b; }
+    .card {
+      background: #1b1e27;
+      border: 1px solid #2c313c;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .logo { color: #e9a23b; font-weight: 700; font-size: 22px; margin-bottom: 4px; }
+    .sub { color: #9aa2b1; font-size: 13px; margin: 0 0 20px; }
+    .account-box {
+      background: #22262f; border: 1px solid #2c313c; border-radius: 10px;
+      padding: 12px 14px; margin-bottom: 20px; font-size: 12.5px;
+    }
+    .account-box .role-pill {
+      display: inline-block; background: #12141a; color: #e9a23b; font-size: 10.5px;
+      font-weight: 700; padding: 3px 9px; border-radius: 100px; text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .account-box .phone { color: #9aa2b1; }
+    .menu-btn {
+      display: block; background: #22262f; border: 1px solid #2c313c; color: #eef0f4;
+      padding: 14px 16px; border-radius: 10px; margin-bottom: 10px; text-decoration: none;
+      font-weight: 600; font-size: 14.5px; transition: border-color 0.15s;
+    }
+    .menu-btn:hover { border-color: #e9a23b; }
+    .menu-btn .menu-desc { display: block; font-weight: 400; font-size: 12px; color: #9aa2b1; margin-top: 2px; }
+    .btn-logout {
+      display: block; width: 100%; background: transparent; border: 1px solid #4a2a20;
+      color: #f0725c; padding: 11px; border-radius: 10px; font-weight: 700; font-size: 13.5px;
+      cursor: pointer; margin-top: 18px;
+    }
+    .btn-logout:hover { background: #2b1712; }
+    .btn-primary {
+      display: block; width: 100%; text-align: center; background: #e9a23b; color: #3a2506;
+      padding: 13px; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none;
+    }
+    .btn-primary:hover { filter: brightness(1.05); }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h1>Crew247.id</h1>
-  <p>Frontend - Setup Berhasil! 🚀</p>
-  <p>Server Express siap melayani halaman web dan API secara bersamaan.</p>
+
+  <!-- STATE: Belum login -->
+  <div class="card hidden" id="state-no-login">
+    <div class="logo">Crew247.id</div>
+    <p class="sub">Anda belum masuk. Silakan login untuk mengakses fitur.</p>
+    <a href="/login.html" class="btn-primary">Masuk / Daftar</a>
+  </div>
+
+  <!-- STATE: Sudah login -->
+  <div class="card hidden" id="state-logged-in">
+    <div class="logo">Crew247.id</div>
+    <p class="sub">Pilih menu di bawah untuk melanjutkan.</p>
+
+    <div class="account-box">
+      <div class="role-pill" id="account-role"></div>
+      <div class="phone" id="account-phone"></div>
+    </div>
+
+    <!-- Menu khusus Kru -->
+    <div id="menu-kru" class="hidden">
+      <a href="/profil-kru.html" class="menu-btn">
+        Profil & CV Digital
+        <span class="menu-desc">Lengkapi atau ubah data profil Anda</span>
+      </a>
+      <a href="/dashboard-kru.html" class="menu-btn">
+        Dashboard Tawaran Gig
+        <span class="menu-desc">Lihat & respons tawaran yang masuk</span>
+      </a>
+    </div>
+
+    <!-- Menu khusus Pembuat Event -->
+    <div id="menu-event" class="hidden">
+      <a href="/posting-event.html" class="menu-btn">
+        Posting Kebutuhan Kru
+        <span class="menu-desc">Buat lowongan acara baru</span>
+      </a>
+      <a href="/direktori.html" class="menu-btn">
+        Direktori Kru
+        <span class="menu-desc">Cari kru berdasarkan tanggal</span>
+      </a>
+      <a href="/beri-rating.html" class="menu-btn">
+        Beri Rating Kru
+        <span class="menu-desc">Nilai kru dari gig yang sudah selesai</span>
+      </a>
+      <a href="/dashboard-event.html" class="menu-btn">Dashboard Event Saya<span class="menu-desc">Pantau event, posisi & status pelamar</span></a>
+    </div>
+
+    <button class="btn-logout" id="btn-logout">Logout</button>
+  </div>
+
+<script>
+  const userId = localStorage.getItem('crew247_user_id');
+  const noHp = localStorage.getItem('crew247_no_hp');
+  const role = localStorage.getItem('crew247_role');
+
+  const stateNoLogin = document.getElementById('state-no-login');
+  const stateLoggedIn = document.getElementById('state-logged-in');
+
+  if (!userId) {
+    stateNoLogin.classList.remove('hidden');
+  } else {
+    stateLoggedIn.classList.remove('hidden');
+
+    document.getElementById('account-role').textContent = role === 'kru' ? 'Kru Panggung' : 'Pembuat Event';
+    document.getElementById('account-phone').textContent = noHp;
+
+    if (role === 'kru') {
+      document.getElementById('menu-kru').classList.remove('hidden');
+    } else if (role === 'pembuat_event') {
+      document.getElementById('menu-event').classList.remove('hidden');
+    }
+  }
+
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    localStorage.removeItem('crew247_user_id');
+    localStorage.removeItem('crew247_no_hp');
+    localStorage.removeItem('crew247_role');
+    window.location.href = '/login.html';
+  });
+</script>
+
 </body>
 </html>
