@@ -37,4 +37,51 @@ router.post('/api/schedule/manual-block', async (req, res) => {
     }
 });
 
+// ENDPOINT BARU: Ambil jadwal kru untuk satu bulan tertentu
+router.get('/api/schedule/:crew_id', async (req, res) => {
+    const { crew_id } = req.params;
+    const { bulan } = req.query; // format: YYYY-MM
+
+    try {
+        let query = `
+            SELECT s.id, s.tanggal_mulai, s.tanggal_selesai, s.sumber, s.event_id, ej.nama_acara
+            FROM schedule_entries s
+            LEFT JOIN event_jobs ej ON s.event_id = ej.id
+            WHERE s.crew_id = $1
+        `;
+        const params = [crew_id];
+
+        if (bulan) {
+            query += ` AND s.tanggal_mulai <= ($2 || '-28')::date + interval '10 days'
+                       AND s.tanggal_selesai >= ($2 || '-01')::date - interval '10 days'`;
+            params.push(bulan);
+        }
+
+        const result = await pool.query(query, params);
+        return res.status(200).json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('[Crew247.id] Gagal mengambil jadwal kru:', error);
+        return res.status(500).json({ error: 'Terjadi kesalahan pada server saat memuat jadwal.' });
+    }
+});
+
+// ENDPOINT BARU: Hapus blokir manual (TIDAK BOLEH untuk jadwal dari gig yang diterima)
+router.delete('/api/schedule/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const check = await pool.query('SELECT * FROM schedule_entries WHERE id = $1', [id]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: 'Data jadwal tidak ditemukan.' });
+        }
+        if (check.rows[0].sumber !== 'manual_blokir') {
+            return res.status(400).json({ error: 'Jadwal dari gig yang diterima tidak bisa dihapus di sini. Gunakan pembatalan gig oleh pembuat event.' });
+        }
+        await pool.query('DELETE FROM schedule_entries WHERE id = $1', [id]);
+        return res.status(200).json({ success: true, message: 'Blokir tanggal berhasil dihapus.' });
+    } catch (error) {
+        console.error('[Crew247.id] Gagal menghapus blokir jadwal:', error);
+        return res.status(500).json({ error: 'Terjadi kesalahan pada server saat menghapus blokir.' });
+    }
+});
+
 module.exports = router;
