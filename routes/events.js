@@ -1,11 +1,12 @@
 const express = require('express');
 const pool = require('../db'); // Menggunakan koneksi pooler Supabase
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // ENDPOINT 1: Pembuat event memposting lowongan acara baru beserta posisi yang dibutuhkan (Yang sudah berhasil sebelumnya)
-router.post('/api/events', async (req, res) => {
+router.post('/api/events', requireAuth, async (req, res) => {
+    const pembuat_event_id = req.user.user_id;
     const { 
-        pembuat_event_id, 
         nama_acara, 
         tanggal_mulai, 
         tanggal_selesai, 
@@ -86,8 +87,11 @@ router.post('/api/events', async (req, res) => {
 });
 
 // ENDPOINT 2 (TAMBAHAN BARU): Mengambil Daftar Gig Selesai (Tanggal Lewat) yang Belum Dirating
-router.get('/api/events/pembuat/:pembuat_event_id/selesai', async (req, res) => {
+router.get('/api/events/pembuat/:pembuat_event_id/selesai', requireAuth, async (req, res) => {
     const { pembuat_event_id } = req.params;
+    if (pembuat_event_id !== req.user.user_id) {
+        return res.status(403).json({ error: 'Anda tidak berhak mengakses data ini.' });
+    }
 
     try {
         const today = new Date().toISOString().split('T')[0];
@@ -132,8 +136,11 @@ router.get('/api/events/pembuat/:pembuat_event_id/selesai', async (req, res) => 
 });
 
 // ENDPOINT BARU: semua event milik pembuat event + posisi + pelamar
-router.get('/api/events/pembuat/:pembuat_event_id', async (req, res) => {
+router.get('/api/events/pembuat/:pembuat_event_id', requireAuth, async (req, res) => {
     const { pembuat_event_id } = req.params;
+    if (pembuat_event_id !== req.user.user_id) {
+        return res.status(403).json({ error: 'Anda tidak berhak mengakses data ini.' });
+    }
     try {
         const ev = await pool.query(
             `SELECT id, nama_acara, tanggal_mulai, tanggal_selesai, lokasi, kota, status_event
@@ -167,6 +174,67 @@ router.get('/api/events/pembuat/:pembuat_event_id', async (req, res) => {
     } catch (error) {
         console.error('[Crew247.id] Gagal memuat dashboard event:', error);
         return res.status(500).json({ error: 'Terjadi kesalahan pada server saat memuat dashboard event.' });
+    }
+});
+
+// ENDPOINT BARU: Edit info ringan event (BUKAN tanggal)
+router.patch('/api/events/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const { nama_acara, lokasi, kota, jam_call_time, zona_waktu } = req.body;
+
+    try {
+        const check = await pool.query('SELECT pembuat_event_id FROM event_jobs WHERE id = $1', [id]);
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: 'Event tidak ditemukan.' });
+        }
+        if (check.rows[0].pembuat_event_id !== req.user.user_id) {
+            return res.status(403).json({ error: 'Anda tidak berhak mengedit event ini.' });
+        }
+
+        const result = await pool.query(
+            `UPDATE event_jobs SET nama_acara = $1, lokasi = $2, kota = $3, jam_call_time = $4, zona_waktu = $5
+             WHERE id = $6 RETURNING *`,
+            [nama_acara, lokasi, kota, jam_call_time, zona_waktu, id]
+        );
+
+        return res.status(200).json({ success: true, message: 'Event berhasil diperbarui.', data: result.rows[0] });
+    } catch (error) {
+        console.error('[Crew247.id] Gagal mengedit event:', error);
+        return res.status(500).json({ error: 'Terjadi kesalahan pada server saat mengedit event.' });
+    }
+});
+
+// ENDPOINT BARU: Edit budget & jumlah dibutuhkan pada satu posisi
+router.patch('/api/job-positions/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const { budget_per_orang, jumlah_dibutuhkan } = req.body;
+
+    try {
+        const check = await pool.query(
+            `SELECT jp.jumlah_terisi, ej.pembuat_event_id
+             FROM job_positions jp JOIN event_jobs ej ON jp.event_job_id = ej.id
+             WHERE jp.id = $1`,
+            [id]
+        );
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: 'Posisi tidak ditemukan.' });
+        }
+        if (check.rows[0].pembuat_event_id !== req.user.user_id) {
+            return res.status(403).json({ error: 'Anda tidak berhak mengedit posisi ini.' });
+        }
+        if (jumlah_dibutuhkan < check.rows[0].jumlah_terisi) {
+            return res.status(400).json({ error: `Jumlah dibutuhkan tidak boleh kurang dari ${check.rows[0].jumlah_terisi} (sudah terisi).` });
+        }
+
+        const result = await pool.query(
+            `UPDATE job_positions SET budget_per_orang = $1, jumlah_dibutuhkan = $2 WHERE id = $3 RETURNING *`,
+            [budget_per_orang, jumlah_dibutuhkan, id]
+        );
+
+        return res.status(200).json({ success: true, message: 'Posisi berhasil diperbarui.', data: result.rows[0] });
+    } catch (error) {
+        console.error('[Crew247.id] Gagal mengedit posisi:', error);
+        return res.status(500).json({ error: 'Terjadi kesalahan pada server saat mengedit posisi.' });
     }
 });
 

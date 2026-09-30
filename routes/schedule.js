@@ -1,10 +1,12 @@
 const express = require('express');
 const pool = require('../db'); // Menggunakan koneksi pooler Supabase
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // ENDPOINT: Kru memblokir rentang tanggal secara manual
-router.post('/api/schedule/manual-block', async (req, res) => {
-    const { crew_id, tanggal_mulai, tanggal_selesai } = req.body;
+router.post('/api/schedule/manual-block', requireAuth, async (req, res) => {
+    const crew_id = req.user.user_id;
+    const { tanggal_mulai, tanggal_selesai } = req.body;
 
     if (!crew_id || !tanggal_mulai || !tanggal_selesai) {
         return res.status(400).json({ error: 'Crew ID, tanggal mulai, dan tanggal selesai wajib diisi!' });
@@ -38,8 +40,11 @@ router.post('/api/schedule/manual-block', async (req, res) => {
 });
 
 // ENDPOINT BARU: Ambil jadwal kru untuk satu bulan tertentu
-router.get('/api/schedule/:crew_id', async (req, res) => {
+router.get('/api/schedule/:crew_id', requireAuth, async (req, res) => {
     const { crew_id } = req.params;
+    if (crew_id !== req.user.user_id) {
+        return res.status(403).json({ error: 'Anda tidak berhak melihat jadwal ini.' });
+    }
     const { bulan } = req.query; // format: YYYY-MM
 
     try {
@@ -66,12 +71,15 @@ router.get('/api/schedule/:crew_id', async (req, res) => {
 });
 
 // ENDPOINT BARU: Hapus blokir manual (TIDAK BOLEH untuk jadwal dari gig yang diterima)
-router.delete('/api/schedule/:id', async (req, res) => {
+router.delete('/api/schedule/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     try {
         const check = await pool.query('SELECT * FROM schedule_entries WHERE id = $1', [id]);
         if (check.rows.length === 0) {
             return res.status(404).json({ error: 'Data jadwal tidak ditemukan.' });
+        }
+        if (check.rows[0].crew_id !== req.user.user_id) {
+            return res.status(403).json({ error: 'Anda tidak berhak menghapus jadwal ini.' });
         }
         if (check.rows[0].sumber !== 'manual_blokir') {
             return res.status(400).json({ error: 'Jadwal dari gig yang diterima tidak bisa dihapus di sini. Gunakan pembatalan gig oleh pembuat event.' });

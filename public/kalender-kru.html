@@ -44,6 +44,7 @@
   .toast { background: #12271f; border: 1px solid #1e4635; color: #5fd996; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
   .hidden { display: none; }
 </style>
+<script src="/auth-helper.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -172,7 +173,7 @@
 
   async function blockDate(iso) {
     try {
-      const res = await fetch('/api/schedule/manual-block', {
+      const res = await authFetch('/api/schedule/manual-block', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ crew_id: userId, tanggal_mulai: iso, tanggal_selesai: iso })
@@ -186,7 +187,7 @@
 
   async function unblockDate(id) {
     try {
-      const res = await fetch('/api/schedule/' + id, { method: 'DELETE' });
+      const res = await authFetch('/api/schedule/' + id, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Gagal membuka blokir.'); return; }
       showToast('Blokir tanggal dibuka.');
@@ -197,7 +198,7 @@
   async function loadSchedule() {
     const bulan = `${viewYear}-${pad(viewMonth + 1)}`;
     try {
-      const res = await fetch(`/api/schedule/${userId}?bulan=${bulan}`);
+      const res = await authFetch(`/api/schedule/${userId}?bulan=${bulan}`);
       const data = await res.json();
       scheduleData = res.ok ? data.data : [];
     } catch (err) {

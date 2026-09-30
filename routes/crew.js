@@ -1,10 +1,14 @@
 const express = require('express');
 const pool = require('../db');// Menggunakan koneksi pooler Supabase yang sudah terbukti berhasil
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // 1. ENDPOINT: Mengambil Data Profil Kru Berdasarkan user_id
-router.get('/api/crew/profile/:user_id', async (req, res) => {
+router.get('/api/crew/profile/:user_id', requireAuth, async (req, res) => {
     const { user_id } = req.params;
+    if (user_id !== req.user.user_id) {
+        return res.status(403).json({ error: 'Anda tidak berhak mengakses profil ini.' });
+    }
 
     try {
         const query = `
@@ -29,9 +33,9 @@ router.get('/api/crew/profile/:user_id', async (req, res) => {
 });
 
 // 2. ENDPOINT: Membuat atau Memperbarui (Upsert) Profil Kru (CV Digital)
-router.post('/api/crew/profile', async (req, res) => {
+router.post('/api/crew/profile', requireAuth, async (req, res) => {
+    const user_id = req.user.user_id; // diambil dari token, bukan dari body
     const { 
-        user_id, 
         nama_lengkap, 
         nama_panggung, 
         peran_utama, 

@@ -1,9 +1,10 @@
 const express = require('express');
 const pool = require('../db');
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // 1. ENDPOINT: Membuat Aplikasi Baru (Lamaran atau Colek Langsung)
-router.post('/api/applications', async (req, res) => {
+router.post('/api/applications', requireAuth, async (req, res) => {
     const { job_position_id, crew_id, sumber } = req.body;
 
     if (!job_position_id || !crew_id || !sumber) {
@@ -18,6 +19,18 @@ router.post('/api/applications', async (req, res) => {
         const posCheck = await pool.query('SELECT * FROM job_positions WHERE id = $1', [job_position_id]);
         if (posCheck.rows.length === 0) {
             return res.status(404).json({ error: 'Posisi pekerjaan tidak ditemukan.' });
+        }
+                if (sumber === 'colek_langsung') {
+            const ownCheck = await pool.query(
+                `SELECT ej.pembuat_event_id FROM job_positions jp 
+                 JOIN event_jobs ej ON jp.event_job_id = ej.id WHERE jp.id = $1`,
+                [job_position_id]
+            );
+            if (ownCheck.rows.length === 0 || ownCheck.rows[0].pembuat_event_id !== req.user.user_id) {
+                return res.status(403).json({ error: 'Anda tidak berhak memilih kru untuk posisi ini.' });
+            }
+        } else if (sumber === 'lamaran' && crew_id !== req.user.user_id) {
+            return res.status(403).json({ error: 'Anda hanya bisa melamar atas nama akun sendiri.' });
         }
 
                 const dup = await pool.query(
@@ -52,8 +65,11 @@ router.post('/api/applications', async (req, res) => {
 });
 
 // 2. ENDPOINT BARU: Mengambil Daftar Tawaran Berstatus 'Menunggu' untuk Kru Tertentu
-router.get('/api/applications/crew/:crew_id', async (req, res) => {
+router.get('/api/applications/crew/:crew_id', requireAuth, async (req, res) => {
     const { crew_id } = req.params;
+    if (crew_id !== req.user.user_id) {
+        return res.status(403).json({ error: 'Anda tidak berhak mengakses data ini.' });
+    }
 
     try {
         const query = `
@@ -92,7 +108,7 @@ router.get('/api/applications/crew/:crew_id', async (req, res) => {
 });
 
 // 3. ENDPOINT: Respons Kru (Terima / Tolak Tawaran)
-router.patch('/api/applications/:id/respond', async (req, res) => {
+router.patch('/api/applications/:id/respond', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { status_keputusan } = req.body;
 
@@ -171,7 +187,7 @@ router.patch('/api/applications/:id/respond', async (req, res) => {
 });
 
 // 4. ENDPOINT: Pembatalan Gig oleh Pembuat Event
-router.patch('/api/applications/:id/cancel', async (req, res) => {
+router.patch('/api/applications/:id/cancel', requireAuth, async (req, res) => {
     const { id } = req.params;
     const client = await pool.connect();
 
@@ -179,7 +195,7 @@ router.patch('/api/applications/:id/cancel', async (req, res) => {
         await client.query('BEGIN');
 
         const appQuery = `
-            SELECT a.*, jp.event_job_id, ej.tanggal_mulai, ej.tanggal_selesai
+            SELECT a.*, jp.event_job_id, ej.tanggal_mulai, ej.tanggal_selesai, ej.pembuat_event_id
             FROM applications a
             JOIN job_positions jp ON a.job_position_id = jp.id
             JOIN event_jobs ej ON jp.event_job_id = ej.id
@@ -193,6 +209,11 @@ router.patch('/api/applications/:id/cancel', async (req, res) => {
         }
 
         const appData = appResult.rows[0];
+        
+        if (appData.pembuat_event_id !== req.user.user_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Anda tidak berhak membatalkan gig ini.' });
+        }
 
         if (appData.status !== 'diterima') {
             await client.query('ROLLBACK');

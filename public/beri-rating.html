@@ -55,6 +55,7 @@
     }
     .hidden { display: none; }
   </style>
+  <script src="/auth-helper.js"></script>
 </head>
 <body>
   
@@ -109,7 +110,7 @@
     ratingContainer.innerHTML = '<div class="empty-state">Memuat data...</div>';
 
     try {
-      const res = await fetch(`/api/events/pembuat/${userId}/selesai`);
+      const res = await authFetch(`/api/events/pembuat/${userId}/selesai`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -183,7 +184,7 @@
     btn.textContent = 'Mengirim...';
 
     try {
-      const res = await fetch('/api/ratings', {
+      const res = await authFetch('/api/ratings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

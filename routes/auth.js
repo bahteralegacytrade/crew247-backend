@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const pool = require('../db'); // Koneksi database PostgreSQL
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 
 // 1. ENDPOINT: Meminta Kode OTP via WhatsApp & Proteksi Rate Limiting
 router.post('/api/auth/otp/request', async (req, res) => {
@@ -104,13 +105,20 @@ router.post('/api/auth/otp/verify', async (req, res) => {
             user = userResult.rows[0];
         }
 
+                const token = jwt.sign(
+            { user_id: user.id, role: user.role, no_hp: user.no_hp },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+        );
+
         return res.status(200).json({
             success: true,
             message: 'Autentikasi berhasil di Crew247.id!',
             data: {
                 user_id: user.id,
                 no_hp: user.no_hp,
-                role: user.role
+                role: user.role,
+                token: token
             }
         });
 

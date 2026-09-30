@@ -128,6 +128,7 @@
     }
     .link-back:hover { color: #e9a23b; }
   </style>
+
 </head>
 <body>
 
@@ -303,6 +304,7 @@
       localStorage.setItem('crew247_user_id', data.data.user_id);
       localStorage.setItem('crew247_no_hp', data.data.no_hp);
       localStorage.setItem('crew247_role', data.data.role);
+      localStorage.setItem('crew247_token', data.data.token);
 
       document.getElementById('result-user-id').textContent = data.data.user_id;
       document.getElementById('result-no-hp').textContent = data.data.no_hp;

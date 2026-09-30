@@ -1,10 +1,12 @@
 const express = require('express');
 const pool = require('../db'); // Menggunakan koneksi pooler Supabase
+const { requireAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // ENDPOINT: Pembuat event memberikan rating & ulasan pasca-gig kepada kru
-router.post('/api/ratings', async (req, res) => {
-    const { job_id, crew_id, pembuat_event_id, skor, komentar } = req.body;
+router.post('/api/ratings', requireAuth, async (req, res) => {
+    const pembuat_event_id = req.user.user_id;
+    const { job_id, crew_id, skor, komentar } = req.body;
 
     // Validasi input dasar
     if (!job_id || !crew_id || !pembuat_event_id || !skor) {
