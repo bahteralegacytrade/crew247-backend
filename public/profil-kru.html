@@ -160,8 +160,13 @@
       <label>Bio Singkat / Deskripsi Profesional</label>
       <textarea id="bio"></textarea>
 
-      <label>URL Foto Profil (opsional)</label>
-      <input type="text" id="foto_url" placeholder="https://...">
+      <label>Foto Profil (opsional)</label>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+        <img id="foto-preview" src="" alt="" style="width:60px; height:60px; border-radius:50%; object-fit:cover; background:#22262f; display:none;">
+        <div id="foto-placeholder" style="width:60px; height:60px; border-radius:50%; background:#22262f; display:flex; align-items:center; justify-content:center; font-size:11px; color:#6b7078;">Belum ada</div>
+        <input type="file" id="foto_input" accept="image/*" style="width:auto; margin-bottom:0;">
+      </div>
+      <input type="hidden" id="foto_url">
 
       <button type="submit" id="btn-submit">Simpan Profil</button>
     </form>
@@ -198,6 +203,40 @@
     loadExistingProfile();
   }
 
+    document.getElementById('foto_input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (ev) => {
+      img.onload = () => {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        // Crop tengah jadi persegi, lalu resize ke 256x256
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('foto_url').value = dataUrl;
+
+        const preview = document.getElementById('foto-preview');
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        document.getElementById('foto-placeholder').style.display = 'none';
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
   async function loadExistingProfile() {
     try {
       const res = await authFetch('/api/crew/profile/' + userId);
@@ -227,6 +266,12 @@
       document.getElementById('keahlian').value = (data.keahlian || []).join(', ');
       document.getElementById('bio').value = data.bio || '';
       document.getElementById('foto_url').value = data.foto_url || '';
+      if (data.foto_url) {
+        const preview = document.getElementById('foto-preview');
+        preview.src = data.foto_url;
+        preview.style.display = 'block';
+        document.getElementById('foto-placeholder').style.display = 'none';
+      }
 
     } catch (err) {
       showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
