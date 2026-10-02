@@ -5,148 +5,320 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crew247.id - Login / Pendaftaran</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-page: #0A0D0B;        /* Dark Leaf */
+      --bg-card: #242C2C;        /* Charleston Green */
+      --bg-surface: #171d1d;
+      --bg-quote: #393720;       /* Lechucks Beard */
+      --accent: #E26D0A;         /* Accent Orange */
+      --accent-hover: #f07b1a;
+      --secondary: #688273;      /* Ecological */
+      --secondary-light: #8da697;
+      --text-white: #F4F7F5;
+      --text-muted: #A3B5AA;
+      --border-subtle: rgba(104, 130, 115, 0.28);
+      --border-active: rgba(226, 109, 10, 0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #12141a;
-      color: #eef0f4;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-page);
+      color: var(--text-white);
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      padding: 24px 16px;
+      -webkit-font-smoothing: antialiased;
     }
+
+    .brand-top {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .brand-top .logo-text {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      color: var(--text-white);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .brand-top .logo-text span {
+      color: var(--accent);
+    }
+
+    .brand-top .tagline {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--secondary);
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* Console Rackmount Card */
     .card {
-      background: #1b1e27;
-      border: 1px solid #2c313c;
-      border-radius: 16px;
-      padding: 28px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 30px 24px;
       width: 100%;
-      max-width: 380px;
+      max-width: 410px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      position: relative;
     }
+
+    /* Hardware rack screw accents */
+    .card::before, .card::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #141818;
+      border: 1px solid var(--border-subtle);
+    }
+    .card::before { left: 14px; }
+    .card::after { right: 14px; }
+
     h1 {
-      color: #e9a23b;
-      font-size: 22px;
+      color: var(--text-white);
+      font-size: 21px;
+      font-weight: 800;
       margin: 0 0 6px;
+      letter-spacing: -0.2px;
     }
+
     p.sub {
-      color: #9aa2b1;
+      color: var(--text-muted);
       font-size: 13.5px;
       margin: 0 0 20px;
       line-height: 1.5;
     }
+
     label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #9aa2b1;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--secondary);
       margin-bottom: 6px;
       text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
+
     input {
       width: 100%;
-      background: #22262f;
-      border: 1px solid #2c313c;
-      color: #eef0f4;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-white);
       padding: 12px 14px;
       border-radius: 10px;
-      font-size: 15px;
+      font-size: 14.5px;
+      font-family: inherit;
       margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
+
     input:focus {
-      outline: 2px solid #e9a23b;
-      outline-offset: 1px;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(226, 109, 10, 0.25);
     }
+
+    input#input-otp {
+      letter-spacing: 6px;
+      font-size: 18px;
+      font-weight: 800;
+      text-align: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
     button {
       width: 100%;
-      background: #e9a23b;
-      color: #3a2506;
+      background: var(--accent);
+      color: #ffffff;
       border: none;
       padding: 13px;
       border-radius: 10px;
-      font-weight: 700;
-      font-size: 15px;
+      font-weight: 800;
+      font-size: 14.5px;
       cursor: pointer;
+      box-shadow: 0 4px 15px rgba(226, 109, 10, 0.35);
+      transition: background 0.2s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    button:hover { filter: brightness(1.05); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+
+    button:active {
+      transform: scale(0.99);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     .error-box {
-      background: #2b1712;
-      border: 1px solid #4a2a20;
-      color: #f0725c;
-      padding: 10px 12px;
-      border-radius: 8px;
+      background: rgba(226, 109, 10, 0.12);
+      border: 1px solid rgba(226, 109, 10, 0.4);
+      color: #ff9b50;
+      padding: 11px 14px;
+      border-radius: 9px;
       font-size: 13px;
       margin-bottom: 16px;
       display: none;
+      line-height: 1.4;
     }
-    .hidden { display: none; }
-    .success-icon { font-size: 40px; text-align: center; margin-bottom: 10px; }
+
+    .hidden { display: none !important; }
+
+    .success-icon {
+      font-size: 42px;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
     .success-detail {
-      background: #22262f;
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-size: 12px;
-      color: #9aa2b1;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 12.5px;
+      color: var(--text-muted);
       word-break: break-all;
-      margin-top: 12px;
+      margin-top: 14px;
     }
+
+    .success-detail b {
+      color: var(--text-white);
+    }
+
     /* Role picker */
     .role-option {
-      background: #22262f;
-      border: 1px solid #2c313c;
-      border-radius: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
       padding: 16px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
       cursor: pointer;
-      transition: border-color 0.15s;
+      transition: all 0.2s ease;
+      position: relative;
     }
-    .role-option:hover { border-color: #e9a23b; }
-    .role-option .role-title { font-weight: 700; font-size: 15px; margin-bottom: 3px; }
-    .role-option .role-desc { font-size: 12.5px; color: #9aa2b1; }
-    .role-badge {
-      display: inline-block;
-      background: #22262f;
-      border: 1px solid #2c313c;
-      color: #e9a23b;
-      font-size: 11px;
+
+    .role-option:hover {
+      border-color: var(--secondary);
+      background: #1c2424;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    .role-option .role-title {
       font-weight: 700;
-      padding: 4px 10px;
+      font-size: 15.5px;
+      margin-bottom: 4px;
+      color: var(--text-white);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-option .role-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(226, 109, 10, 0.12);
+      border: 1px solid rgba(226, 109, 10, 0.4);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px;
       border-radius: 100px;
       margin-bottom: 16px;
       text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
+
     .link-back {
       display: block;
       text-align: center;
-      margin-top: 14px;
+      margin-top: 16px;
       font-size: 13px;
-      color: #9aa2b1;
+      color: var(--text-muted);
       text-decoration: none;
       cursor: pointer;
+      transition: color 0.2s;
     }
-    .link-back:hover { color: #e9a23b; }
-  </style>
 
+    .link-back:hover {
+      color: var(--accent);
+    }
+
+    .btn-success-link {
+      display: block;
+      text-align: center;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 13px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 14.5px;
+      text-decoration: none;
+      margin-top: 16px;
+      box-shadow: 0 4px 15px rgba(226, 109, 10, 0.35);
+      transition: background 0.2s;
+    }
+
+    .btn-success-link:hover {
+      background: var(--accent-hover);
+    }
+  </style>
 </head>
 <body>
+
+  <div class="brand-top">
+    <a href="/index.html" class="logo-text">
+      CREW247<span>.ID</span>
+    </a>
+    <div class="tagline">Stage Crew & Event Production Marketplace</div>
+  </div>
 
   <div class="card">
 
     <!-- STEP 0: Pilih peran -->
     <div id="step-role">
       <h1>Masuk ke Crew247.id</h1>
-      <p class="sub">Pilih peran Anda untuk melanjutkan.</p>
+      <p class="sub">Pilih peran Anda untuk melanjutkan ke konsol panggung.</p>
 
       <div class="role-option" id="role-kru">
         <div class="role-title">🎧 Saya Kru Panggung</div>
-        <div class="role-desc">Daftar/masuk untuk mengelola profil & jadwal Anda.</div>
+        <div class="role-desc">Daftar/masuk untuk mengelola profil, keahlian gear, rate harian, & jadwal manggung Anda.</div>
       </div>
 
       <div class="role-option" id="role-event">
         <div class="role-title">📋 Saya Pembuat Event</div>
-        <div class="role-desc">Daftar/masuk untuk mencari & memilih kru.</div>
+        <div class="role-desc">Daftar/masuk untuk mencari, memposting lowongan acara, & memilih kru panggung terkurasi.</div>
       </div>
     </div>
 
@@ -179,8 +351,8 @@
       <p class="sub" style="text-align:center;">Autentikasi Crew247.id Anda berhasil terverifikasi sebagai <b id="role-display-success"></b>.</p>
       <div class="success-detail">
         <div><b>User ID:</b> <span id="result-user-id"></span></div>
-        <div style="margin-top:4px;"><b>No. HP:</b> <span id="result-no-hp"></span></div>
-        <a href="/index.html" style="display:block; text-align:center; background:#e9a23b; color:#3a2506; padding:13px; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; margin-top:16px;">Lanjut ke Beranda →</a>
+        <div style="margin-top:6px;"><b>No. HP:</b> <span id="result-no-hp"></span></div>
+        <a href="/index.html" class="btn-success-link">Lanjut ke Beranda &rarr;</a>
       </div>
     </div>
 
