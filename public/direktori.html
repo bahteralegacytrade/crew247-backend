@@ -5,78 +5,95 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crew247.id - Direktori Kru</title>
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-page: #0A0D0B; --bg-card: #242C2C; --bg-surface: #171d1d;
+      --accent: #E26D0A; --accent-hover: #f07b1a; --secondary: #688273;
+      --text-white: #F4F7F5; --text-muted: #A3B5AA; --border-subtle: rgba(104,130,115,.28);
+      --ok: #10b981; --ok-bg: rgba(16,185,129,.1); --gold: #FBBF24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #12141a; color: #eef0f4; margin: 0; padding: 20px; min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-page); color: var(--text-white); margin: 0; padding: 24px 16px; min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
     .wrap { max-width: 640px; margin: 0 auto; }
+    .back-link { color: var(--text-muted); font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 14px; }
+    .back-link:hover { color: var(--accent); }
     .header-card {
-      background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px;
-      padding: 22px 20px; margin-bottom: 18px;
+      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 18px;
+      padding: 22px 20px; margin-bottom: 18px; position: relative;
+      box-shadow: 0 12px 40px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
     }
-    h1 { color: #e9a23b; font-size: 20px; margin: 0 0 6px; }
-    p.sub { color: #9aa2b1; font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
+    .header-card::before, .header-card::after {
+      content: ""; position: absolute; top: 14px; width: 7px; height: 7px; border-radius: 50%;
+      background: #141818; border: 1px solid var(--border-subtle);
+    }
+    .header-card::before { left: 14px; } .header-card::after { right: 14px; }
+    h1 { color: var(--text-white); font-size: 19px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.2px; }
+    p.sub { color: var(--text-muted); font-size: 13.5px; margin: 0 0 18px; line-height: 1.5; }
     label {
-      display: block; font-size: 11px; font-weight: 600; color: #9aa2b1;
-      margin-bottom: 6px; text-transform: uppercase;
+      display: block; font-size: 10.5px; font-weight: 700; color: var(--secondary);
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px;
     }
     input, select {
-      width: 100%; background: #22262f; border: 1px solid #2c313c; color: #eef0f4;
-      padding: 10px 12px; border-radius: 9px; font-size: 14px; margin-bottom: 12px;
-      font-family: inherit;
+      width: 100%; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-white);
+      padding: 10px 12px; border-radius: 9px; font-size: 14px; margin-bottom: 12px; font-family: inherit;
+      outline: none; transition: border-color .2s, box-shadow .2s;
     }
-    input:focus, select:focus { outline: 2px solid #e9a23b; outline-offset: 1px; }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(226,109,10,.25); }
     .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     button {
-      width: 100%; background: #e9a23b; color: #3a2506; border: none; padding: 12px;
-      border-radius: 9px; font-weight: 700; font-size: 14.5px; cursor: pointer;
+      width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px;
+      border-radius: 9px; font-weight: 800; font-size: 14.5px; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(226,109,10,.3); transition: background .2s, transform .1s;
     }
-    button:hover { filter: brightness(1.05); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: scale(.99); }
+    button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
     .error-box {
-      background: #2b1712; border: 1px solid #4a2a20; color: #f0725c; padding: 10px 12px;
-      border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none;
+      background: rgba(226,109,10,.12); border: 1px solid rgba(226,109,10,.4); color: #ff9b50;
+      padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none;
     }
     .meta-info {
-      background: #22262f; border: 1px dashed #2c313c; border-radius: 9px;
-      padding: 10px 14px; font-size: 13px; color: #9aa2b1; margin-bottom: 16px; display: none;
+      background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: 9px;
+      padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-bottom: 16px; display: none; line-height: 1.5;
     }
-    .meta-info b { color: #eef0f4; }
+    .meta-info b { color: var(--text-white); }
     .no-position-note {
-      background: #22262f; border: 1px dashed #2c313c; border-radius: 9px;
-      padding: 10px 14px; font-size: 12.5px; color: #9aa2b1; margin-bottom: 16px;
+      background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: 9px;
+      padding: 10px 14px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;
     }
     .crew-card {
-      background: #1b1e27; border: 1px solid #2c313c; border-radius: 14px;
+      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px;
       padding: 16px; margin-bottom: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
     .crew-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
     .crew-name { font-weight: 700; font-size: 15px; }
-    .crew-role { font-size: 12.5px; color: #9aa2b1; margin-top: 2px; }
-    .crew-meta { font-size: 11.5px; color: #9aa2b1; margin-top: 4px; }
-    .rate { font-weight: 700; font-size: 14px; color: #e9a23b; white-space: nowrap; text-align: right; }
+    .crew-role { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+    .rating-row { display: flex; align-items: center; gap: 5px; margin-top: 6px; }
+    .rating-row .stars { color: var(--gold); font-size: 12px; letter-spacing: 1px; }
+    .rating-row .score { font-size: 12.5px; font-weight: 700; color: var(--text-white); }
+    .rating-row .count { font-size: 11.5px; color: var(--text-muted); }
+    .rate { font-weight: 800; font-size: 14px; color: var(--accent); white-space: nowrap; text-align: right; }
+    .rate .unit { font-size: 10px; font-weight: 400; color: var(--text-muted); }
     .tags { margin-top: 10px; }
     .tag {
-      display: inline-block; background: #22262f; border: 1px solid #2c313c; color: #9aa2b1;
-      font-size: 10.5px; padding: 3px 8px; border-radius: 6px; margin: 2px 4px 0 0;
+      display: inline-block; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      color: var(--text-muted); font-size: 10.5px; padding: 3px 8px; border-radius: 6px; margin: 2px 4px 0 0;
     }
-    .empty-state { text-align: center; padding: 40px 20px; color: #9aa2b1; font-size: 13.5px; }
-    .btn-pilih {
-      margin-top: 12px; background: #e9a23b; color: #3a2506; border: none; padding: 10px;
-      border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; width: 100%;
-    }
-    .btn-pilih:disabled { background: #22262f; color: #5fd996; opacity: 1; cursor: default; }
-    .no-job-text { margin-top: 10px; font-size: 11.5px; color: #6b7078; font-style: italic; }
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13.5px; }
+    .btn-pilih { margin-top: 12px; }
+    .btn-pilih:disabled { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(16,185,129,.35); box-shadow: none; opacity: 1; }
+    .no-job-text { margin-top: 10px; font-size: 11.5px; color: var(--secondary); font-style: italic; }
     .hidden { display: none; }
   </style>
   <script src="/auth-helper.js"></script>
 </head>
 <body>
-  
-  <div style="max-width:640px; margin:0 auto 10px;"><a href="/index.html" style="color:#9aa2b1; font-size:13px; text-decoration:none;">← Beranda</a></div>
-
   <div class="wrap">
+    <a href="/index.html" class="back-link">&larr; Beranda</a>
 
     <div class="header-card">
       <h1>Direktori Kru Tersedia</h1>
@@ -119,7 +136,6 @@
     <div id="meta-info" class="meta-info"></div>
 
     <div id="results-container"></div>
-
   </div>
 
 <script>
@@ -128,21 +144,14 @@
   const resultsContainer = document.getElementById('results-container');
   const noPositionNote = document.getElementById('no-position-note');
 
-  function showError(msg) {
-    errorBox.textContent = msg;
-    errorBox.style.display = 'block';
-  }
-  function hideError() {
-    errorBox.style.display = 'none';
-  }
-  function fmtRupiah(angka) {
-    return 'Rp ' + Number(angka).toLocaleString('id-ID');
-  }
+  function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
+  function hideError() { errorBox.style.display = 'none'; }
+  function fmtRupiah(angka) { return 'Rp ' + Number(angka).toLocaleString('id-ID'); }
 
   const params = new URLSearchParams(window.location.search);
   const qMulai = params.get('tanggal_mulai');
   const qSelesai = params.get('tanggal_selesai');
-  const jobPositionId = params.get('job_position_id'); // bisa null
+  const jobPositionId = params.get('job_position_id');
 
   if (qMulai) document.getElementById('tanggal_mulai').value = qMulai;
   if (qSelesai) document.getElementById('tanggal_selesai').value = qSelesai;
@@ -202,7 +211,6 @@
         resultsContainer.innerHTML = `<div class="empty-state">Tidak ada kru tersedia di tanggal ini. Coba tanggal atau filter lain.</div>`;
       } else {
         resultsContainer.innerHTML = data.data.map(renderCrewCard).join('');
-        // Pasang event listener untuk tiap tombol "Pilih Kru" setelah render
         document.querySelectorAll('.btn-pilih').forEach(btn => {
           btn.addEventListener('click', () => pilihKru(btn));
         });
@@ -228,15 +236,19 @@
       actionHtml = `<div class="no-job-text">Buka dari halaman posting event untuk memilih kru.</div>`;
     }
 
+    const ratingHtml = crew.total_gig_selesai > 0
+      ? `<div class="rating-row"><span class="stars">★</span><span class="score">${parseFloat(crew.rating_avg).toFixed(2)}</span><span class="count">(${crew.total_gig_selesai} gig selesai)</span></div>`
+      : `<div class="rating-row"><span class="count">Belum ada rating</span></div>`;
+
     return `
       <div class="crew-card">
         <div class="crew-top">
           <div>
-            <div class="crew-name">${crew.nama_lengkap} <span style="color:#9aa2b1; font-weight:400;">(${crew.nama_panggung})</span></div>
+            <div class="crew-name">${crew.nama_lengkap} <span style="color:var(--text-muted); font-weight:400;">(${crew.nama_panggung})</span></div>
             <div class="crew-role">${crew.peran_utama} · ${crew.kota}</div>
-            <div class="crew-meta">★ ${crew.rating_avg} (${crew.total_gig_selesai} gig selesai)</div>
+            ${ratingHtml}
           </div>
-          <div class="rate">${fmtRupiah(crew.rate_harian)}<br><span style="font-size:10px; font-weight:400; color:#9aa2b1;">/hari</span></div>
+          <div class="rate">${fmtRupiah(crew.rate_harian)}<br><span class="unit">/hari</span></div>
         </div>
         <div class="tags">${tags}</div>
         ${actionHtml}
@@ -269,7 +281,6 @@
       }
 
       btn.textContent = '✓ Menunggu Respons Kru';
-      // Tetap disabled, tidak dikembalikan ke enabled
 
     } catch (err) {
       alert('Tidak bisa terhubung ke server.');
@@ -278,6 +289,5 @@
     }
   }
 </script>
-
 </body>
 </html>

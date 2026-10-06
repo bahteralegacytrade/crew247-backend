@@ -6,22 +6,23 @@
   <title>Crew247.id - Login / Pendaftaran</title>
   <style>
     :root {
-      --bg-page: #0A0D0B;        /* Dark Leaf */
-      --bg-card: #242C2C;        /* Charleston Green */
+      --bg-page: #0A0D0B;
+      --bg-card: #242C2C;
       --bg-surface: #171d1d;
-      --bg-quote: #393720;       /* Lechucks Beard */
-      --accent: #E26D0A;         /* Accent Orange */
+      --bg-quote: #393720;
+      --accent: #E26D0A;
       --accent-hover: #f07b1a;
-      --secondary: #688273;      /* Ecological */
+      --secondary: #688273;
       --secondary-light: #8da697;
       --text-white: #F4F7F5;
       --text-muted: #A3B5AA;
       --border-subtle: rgba(104, 130, 115, 0.28);
       --border-active: rgba(226, 109, 10, 0.5);
+      --ok: #10b981;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background: var(--bg-page);
@@ -35,36 +36,17 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    .brand-top {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
+    .brand-top { text-align: center; margin-bottom: 20px; }
     .brand-top .logo-text {
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 0.8px;
-      color: var(--text-white);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      font-size: 24px; font-weight: 900; letter-spacing: 0.8px; color: var(--text-white);
+      text-decoration: none; display: inline-flex; align-items: center; gap: 4px;
     }
-
-    .brand-top .logo-text span {
-      color: var(--accent);
-    }
-
+    .brand-top .logo-text span { color: var(--accent); }
     .brand-top .tagline {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--secondary);
-      font-weight: 700;
-      margin-top: 4px;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--secondary); font-weight: 700; margin-top: 4px;
     }
 
-    /* Console Rackmount Card */
     .card {
       background: var(--bg-card);
       border: 1px solid var(--border-subtle);
@@ -75,232 +57,117 @@
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
       position: relative;
     }
-
-    /* Hardware rack screw accents */
     .card::before, .card::after {
-      content: "";
-      position: absolute;
-      top: 14px;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #141818;
-      border: 1px solid var(--border-subtle);
+      content: ""; position: absolute; top: 14px; width: 7px; height: 7px;
+      border-radius: 50%; background: #141818; border: 1px solid var(--border-subtle);
     }
     .card::before { left: 14px; }
     .card::after { right: 14px; }
 
-    h1 {
-      color: var(--text-white);
-      font-size: 21px;
-      font-weight: 800;
-      margin: 0 0 6px;
-      letter-spacing: -0.2px;
-    }
-
-    p.sub {
-      color: var(--text-muted);
-      font-size: 13.5px;
-      margin: 0 0 20px;
-      line-height: 1.5;
-    }
+    h1 { color: var(--text-white); font-size: 21px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.2px; }
+    p.sub { color: var(--text-muted); font-size: 13.5px; margin: 0 0 20px; line-height: 1.5; }
 
     label {
-      display: block;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--secondary);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      display: block; font-size: 11px; font-weight: 700; color: var(--secondary);
+      margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px;
     }
 
     input {
-      width: 100%;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      color: var(--text-white);
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-size: 14.5px;
-      font-family: inherit;
-      margin-bottom: 16px;
-      outline: none;
+      width: 100%; background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      color: var(--text-white); padding: 12px 14px; border-radius: 10px; font-size: 14.5px;
+      font-family: inherit; margin-bottom: 16px; outline: none;
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-
-    input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(226, 109, 10, 0.25);
-    }
-
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(226, 109, 10, 0.25); }
     input#input-otp {
-      letter-spacing: 6px;
-      font-size: 18px;
-      font-weight: 800;
-      text-align: center;
+      letter-spacing: 6px; font-size: 18px; font-weight: 800; text-align: center;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
 
     button {
-      width: 100%;
-      background: var(--accent);
-      color: #ffffff;
-      border: none;
-      padding: 13px;
-      border-radius: 10px;
-      font-weight: 800;
-      font-size: 14.5px;
-      cursor: pointer;
+      width: 100%; background: var(--accent); color: #ffffff; border: none; padding: 13px;
+      border-radius: 10px; font-weight: 800; font-size: 14.5px; cursor: pointer;
       box-shadow: 0 4px 15px rgba(226, 109, 10, 0.35);
       transition: background 0.2s ease, transform 0.1s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
     }
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: scale(0.99); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-    button:hover {
-      background: var(--accent-hover);
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border-subtle); color: var(--text-white);
+      box-shadow: none; margin-top: 10px;
     }
-
-    button:active {
-      transform: scale(0.99);
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
+    .btn-ghost:hover { border-color: var(--secondary); background: #1c2424; }
 
     .error-box {
-      background: rgba(226, 109, 10, 0.12);
-      border: 1px solid rgba(226, 109, 10, 0.4);
-      color: #ff9b50;
-      padding: 11px 14px;
-      border-radius: 9px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: none;
-      line-height: 1.4;
+      background: rgba(226, 109, 10, 0.12); border: 1px solid rgba(226, 109, 10, 0.4);
+      color: #ff9b50; padding: 11px 14px; border-radius: 9px; font-size: 13px;
+      margin-bottom: 16px; display: none; line-height: 1.4;
     }
 
     .hidden { display: none !important; }
 
-    .success-icon {
-      font-size: 42px;
-      text-align: center;
-      margin-bottom: 10px;
-    }
-
+    .success-icon { font-size: 42px; text-align: center; margin-bottom: 10px; }
     .success-detail {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 14px 16px;
-      font-size: 12.5px;
-      color: var(--text-muted);
-      word-break: break-all;
-      margin-top: 14px;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px;
+      padding: 14px 16px; font-size: 12.5px; color: var(--text-muted);
+      word-break: break-all; margin-top: 14px;
     }
+    .success-detail b { color: var(--text-white); }
 
-    .success-detail b {
-      color: var(--text-white);
-    }
-
-    /* Role picker */
     .role-option {
-      background: var(--bg-surface);
-      border: 1px solid var(--border-subtle);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 14px;
+      padding: 16px; margin-bottom: 14px; cursor: pointer; transition: all 0.2s ease; position: relative;
     }
-
     .role-option:hover {
-      border-color: var(--secondary);
-      background: #1c2424;
-      transform: translateY(-2px);
+      border-color: var(--secondary); background: #1c2424; transform: translateY(-2px);
       box-shadow: 0 4px 16px rgba(0,0,0,0.3);
     }
-
     .role-option .role-title {
-      font-weight: 700;
-      font-size: 15.5px;
-      margin-bottom: 4px;
-      color: var(--text-white);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-weight: 700; font-size: 15.5px; margin-bottom: 4px; color: var(--text-white);
+      display: flex; align-items: center; gap: 6px;
     }
-
-    .role-option .role-desc {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.45;
-    }
+    .role-option .role-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
 
     .role-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(226, 109, 10, 0.12);
-      border: 1px solid rgba(226, 109, 10, 0.4);
-      color: var(--accent);
-      font-size: 11px;
-      font-weight: 800;
-      padding: 4px 12px;
-      border-radius: 100px;
-      margin-bottom: 16px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
+      display: inline-flex; align-items: center; gap: 5px; background: rgba(226, 109, 10, 0.12);
+      border: 1px solid rgba(226, 109, 10, 0.4); color: var(--accent); font-size: 11px;
+      font-weight: 800; padding: 4px 12px; border-radius: 100px; margin-bottom: 16px;
+      text-transform: uppercase; letter-spacing: 0.6px;
     }
 
     .link-back {
-      display: block;
-      text-align: center;
-      margin-top: 16px;
-      font-size: 13px;
-      color: var(--text-muted);
-      text-decoration: none;
-      cursor: pointer;
-      transition: color 0.2s;
+      display: block; text-align: center; margin-top: 16px; font-size: 13px;
+      color: var(--text-muted); text-decoration: none; cursor: pointer; transition: color 0.2s;
     }
-
-    .link-back:hover {
-      color: var(--accent);
-    }
+    .link-back:hover { color: var(--accent); }
 
     .btn-success-link {
-      display: block;
-      text-align: center;
-      background: var(--accent);
-      color: #ffffff;
-      padding: 13px;
-      border-radius: 10px;
-      font-weight: 800;
-      font-size: 14.5px;
-      text-decoration: none;
-      margin-top: 16px;
-      box-shadow: 0 4px 15px rgba(226, 109, 10, 0.35);
+      display: block; text-align: center; background: var(--accent); color: #ffffff;
+      padding: 13px; border-radius: 10px; font-weight: 800; font-size: 14.5px;
+      text-decoration: none; margin-top: 16px; box-shadow: 0 4px 15px rgba(226, 109, 10, 0.35);
       transition: background 0.2s;
     }
+    .btn-success-link:hover { background: var(--accent-hover); }
 
-    .btn-success-link:hover {
-      background: var(--accent-hover);
+    .divider {
+      display: flex; align-items: center; gap: 10px; margin: 18px 0; color: var(--text-muted); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border-subtle); }
+
+    .hint-box {
+      background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 9px;
+      padding: 10px 14px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;
     }
   </style>
 </head>
 <body>
 
   <div class="brand-top">
-    <a href="/index.html" class="logo-text">
-      CREW247<span>.ID</span>
-    </a>
+    <a href="/index.html" class="logo-text">CREW247<span>.ID</span></a>
     <div class="tagline">Stage Crew & Event Production Marketplace</div>
   </div>
 
@@ -322,16 +189,31 @@
       </div>
     </div>
 
-    <!-- STEP 1: Input nomor HP -->
+    <!-- STEP LOGIN: Nomor HP + Password (jalur utama untuk yang sudah pernah daftar) -->
+    <div id="step-login" class="hidden">
+      <span class="role-badge" id="role-badge-login"></span>
+      <h1>Masuk</h1>
+      <p class="sub">Masukkan nomor WhatsApp dan password Anda.</p>
+      <div id="error-login" class="error-box"></div>
+      <label>Nomor WhatsApp</label>
+      <input type="text" id="input-login-phone" placeholder="628123456789">
+      <label>Password</label>
+      <input type="password" id="input-login-password" placeholder="••••••••">
+      <button id="btn-login">Masuk</button>
+      <a class="link-back" id="btn-to-otp-flow">Belum punya password / lupa password? Daftar atau reset via OTP &rarr;</a>
+      <a class="link-back" id="btn-back-to-role-1">&larr; Ganti peran</a>
+    </div>
+
+    <!-- STEP 1: Input nomor HP untuk OTP (daftar baru / lupa password) -->
     <div id="step-phone" class="hidden">
       <span class="role-badge" id="role-badge-phone"></span>
-      <h1>Masuk / Daftar</h1>
+      <h1>Daftar / Reset Password</h1>
       <p class="sub">Masukkan nomor WhatsApp Anda untuk menerima kode verifikasi OTP.</p>
       <div id="error-phone" class="error-box"></div>
       <label>Nomor WhatsApp</label>
       <input type="text" id="input-phone" placeholder="628123456789">
       <button id="btn-send-otp">Kirim Kode OTP</button>
-      <a class="link-back" id="btn-back-to-role">&larr; Ganti peran</a>
+      <a class="link-back" id="btn-back-to-login">&larr; Kembali ke login password</a>
     </div>
 
     <!-- STEP 2: Input OTP -->
@@ -341,7 +223,19 @@
       <div id="error-otp" class="error-box"></div>
       <label>Kode OTP (6 digit)</label>
       <input type="text" id="input-otp" placeholder="123456" maxlength="6">
-      <button id="btn-verify-otp">Verifikasi & Masuk</button>
+      <button id="btn-verify-otp">Verifikasi</button>
+    </div>
+
+    <!-- STEP SET PASSWORD: Buat / reset password setelah OTP terverifikasi -->
+    <div id="step-set-password" class="hidden">
+      <h1>Buat Password</h1>
+      <p class="sub">Password ini akan dipakai untuk login berikutnya — tidak perlu OTP lagi.</p>
+      <div id="error-password" class="error-box"></div>
+      <label>Password Baru (min. 6 karakter)</label>
+      <input type="password" id="input-new-password" placeholder="••••••••">
+      <label>Ulangi Password</label>
+      <input type="password" id="input-confirm-password" placeholder="••••••••">
+      <button id="btn-set-password">Simpan Password & Masuk</button>
     </div>
 
     <!-- STEP 3: Sukses -->
@@ -360,42 +254,104 @@
 
 <script>
   let currentPhone = '';
-  let selectedRole = ''; // 'kru' atau 'pembuat_event'
+  let selectedRole = '';
 
   const stepRole = document.getElementById('step-role');
+  const stepLogin = document.getElementById('step-login');
   const stepPhone = document.getElementById('step-phone');
   const stepOtp = document.getElementById('step-otp');
+  const stepSetPassword = document.getElementById('step-set-password');
   const stepSuccess = document.getElementById('step-success');
 
+  const errorLogin = document.getElementById('error-login');
   const errorPhone = document.getElementById('error-phone');
   const errorOtp = document.getElementById('error-otp');
+  const errorPassword = document.getElementById('error-password');
 
-  function showError(el, message) {
-    el.textContent = message;
-    el.style.display = 'block';
-  }
-  function hideError(el) {
-    el.style.display = 'none';
+  function showError(el, message) { el.textContent = message; el.style.display = 'block'; }
+  function hideError(el) { el.style.display = 'none'; }
+  function roleLabel(role) { return role === 'kru' ? 'Kru Panggung' : 'Pembuat Event'; }
+
+  function goToSuccess(data) {
+    localStorage.setItem('crew247_user_id', data.user_id);
+    localStorage.setItem('crew247_no_hp', data.no_hp);
+    localStorage.setItem('crew247_role', data.role);
+    localStorage.setItem('crew247_token', data.token);
+
+    document.getElementById('result-user-id').textContent = data.user_id;
+    document.getElementById('result-no-hp').textContent = data.no_hp;
+    document.getElementById('role-display-success').textContent = roleLabel(data.role);
+
+    [stepRole, stepLogin, stepPhone, stepOtp, stepSetPassword].forEach(el => el.classList.add('hidden'));
+    stepSuccess.classList.remove('hidden');
   }
 
-  function roleLabel(role) {
-    return role === 'kru' ? 'Kru Panggung' : 'Pembuat Event';
-  }
-
-  // STEP 0 -> Pilih peran
+  // STEP 0 -> Pilih peran -> langsung ke layar LOGIN (password), bukan OTP
   document.getElementById('role-kru').addEventListener('click', () => selectRole('kru'));
   document.getElementById('role-event').addEventListener('click', () => selectRole('pembuat_event'));
 
   function selectRole(role) {
     selectedRole = role;
+    document.getElementById('role-badge-login').textContent = roleLabel(role);
     document.getElementById('role-badge-phone').textContent = roleLabel(role);
     stepRole.classList.add('hidden');
-    stepPhone.classList.remove('hidden');
+    stepLogin.classList.remove('hidden');
   }
 
-  document.getElementById('btn-back-to-role').addEventListener('click', () => {
-    stepPhone.classList.add('hidden');
+  document.getElementById('btn-back-to-role-1').addEventListener('click', () => {
+    stepLogin.classList.add('hidden');
     stepRole.classList.remove('hidden');
+    hideError(errorLogin);
+  });
+
+  // STEP LOGIN -> Masuk pakai password
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    const phone = document.getElementById('input-login-phone').value.trim();
+    const password = document.getElementById('input-login-password').value;
+    hideError(errorLogin);
+
+    if (!phone || !password) {
+      showError(errorLogin, 'Nomor HP dan password wajib diisi.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true;
+    btn.textContent = 'Memeriksa...';
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ no_hp: phone, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(errorLogin, data.error || 'Gagal login.');
+        btn.disabled = false;
+        btn.textContent = 'Masuk';
+        return;
+      }
+
+      goToSuccess(data.data);
+
+    } catch (err) {
+      showError(errorLogin, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Masuk';
+    }
+  });
+
+  // Dari layar login -> ke alur OTP (daftar baru / lupa password)
+  document.getElementById('btn-to-otp-flow').addEventListener('click', () => {
+    stepLogin.classList.add('hidden');
+    stepPhone.classList.remove('hidden');
+    hideError(errorPhone);
+  });
+  document.getElementById('btn-back-to-login').addEventListener('click', () => {
+    stepPhone.classList.add('hidden');
+    stepLogin.classList.remove('hidden');
     hideError(errorPhone);
   });
 
@@ -443,7 +399,7 @@
     }
   });
 
-  // STEP 2 -> Verifikasi OTP
+  // STEP 2 -> Verifikasi OTP -> lanjut ke Set Password (BUKAN langsung sukses)
   document.getElementById('btn-verify-otp').addEventListener('click', async () => {
     const otpCode = document.getElementById('input-otp').value.trim();
     hideError(errorOtp);
@@ -468,27 +424,63 @@
       if (!res.ok) {
         showError(errorOtp, data.error || 'Kode OTP salah atau kadaluarsa.');
         btn.disabled = false;
-        btn.textContent = 'Verifikasi & Masuk';
+        btn.textContent = 'Verifikasi';
         return;
       }
 
-      // Simpan ke localStorage, TERMASUK peran
-      localStorage.setItem('crew247_user_id', data.data.user_id);
-      localStorage.setItem('crew247_no_hp', data.data.no_hp);
-      localStorage.setItem('crew247_role', data.data.role);
-      localStorage.setItem('crew247_token', data.data.token);
-
-      document.getElementById('result-user-id').textContent = data.data.user_id;
-      document.getElementById('result-no-hp').textContent = data.data.no_hp;
-      document.getElementById('role-display-success').textContent = roleLabel(data.data.role);
-
       stepOtp.classList.add('hidden');
-      stepSuccess.classList.remove('hidden');
+      stepSetPassword.classList.remove('hidden');
+
+      btn.disabled = false;
+      btn.textContent = 'Verifikasi';
 
     } catch (err) {
       showError(errorOtp, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
       btn.disabled = false;
-      btn.textContent = 'Verifikasi & Masuk';
+      btn.textContent = 'Verifikasi';
+    }
+  });
+
+  // STEP SET PASSWORD -> simpan password, otomatis login
+  document.getElementById('btn-set-password').addEventListener('click', async () => {
+    const pass1 = document.getElementById('input-new-password').value;
+    const pass2 = document.getElementById('input-confirm-password').value;
+    hideError(errorPassword);
+
+    if (!pass1 || pass1.length < 6) {
+      showError(errorPassword, 'Password minimal 6 karakter.');
+      return;
+    }
+    if (pass1 !== pass2) {
+      showError(errorPassword, 'Konfirmasi password tidak cocok.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-set-password');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+      const res = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ no_hp: currentPhone, password: pass1 })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(errorPassword, data.error || 'Gagal menyimpan password.');
+        btn.disabled = false;
+        btn.textContent = 'Simpan Password & Masuk';
+        return;
+      }
+
+      goToSuccess(data.data);
+
+    } catch (err) {
+      showError(errorPassword, 'Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Simpan Password & Masuk';
     }
   });
 </script>

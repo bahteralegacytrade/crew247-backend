@@ -5,50 +5,72 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crew247.id - Kalender Saya</title>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #12141a; color: #eef0f4; margin: 0; padding: 20px; min-height: 100vh; }
+  :root {
+    --bg-page: #0A0D0B; --bg-card: #242C2C; --bg-surface: #171d1d;
+    --accent: #E26D0A; --accent-hover: #f07b1a; --secondary: #688273;
+    --text-white: #F4F7F5; --text-muted: #A3B5AA; --border-subtle: rgba(104,130,115,.28);
+    --ok: #10b981; --ok-bg: rgba(16,185,129,.1); --danger: #f0725c; --danger-bg: rgba(240,114,92,.1);
+    --gig-bg: rgba(226,109,10,.16); --gig-text: var(--accent);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg-page); color: var(--text-white); margin: 0; padding: 24px 16px; min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
   .wrap { max-width: 480px; margin: 0 auto; }
-  .back { color: #9aa2b1; font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 10px; }
-  .box { background: #1b1e27; border: 1px solid #2c313c; border-radius: 16px; padding: 20px; margin-bottom: 14px; }
-  h1 { color: #e9a23b; font-size: 20px; margin: 0 0 4px; }
-  .sub { color: #9aa2b1; font-size: 13px; margin: 0 0 4px; line-height: 1.5; }
-  a { color: #e9a23b; }
+  .back-link { color: var(--text-muted); font-size: 13px; text-decoration: none; display: inline-block; margin-bottom: 14px; }
+  .back-link:hover { color: var(--accent); }
+  .box {
+    background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px;
+    padding: 20px; margin-bottom: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+  h1 { color: var(--text-white); font-size: 19px; font-weight: 800; margin: 0 0 4px; letter-spacing: -.2px; }
+  .sub { color: var(--text-muted); font-size: 13px; margin: 0 0 4px; line-height: 1.5; }
+  a { color: var(--accent); }
 
   .nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .nav button { background: #22262f; border: 1px solid #2c313c; color: #eef0f4; width: 34px; height: 34px; border-radius: 9px; font-size: 15px; cursor: pointer; }
-  .nav button:hover { border-color: #e9a23b; }
-  .nav .month-label { font-weight: 700; font-size: 15px; }
+  .nav button {
+    background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-white);
+    width: 34px; height: 34px; border-radius: 9px; font-size: 15px; cursor: pointer;
+    box-shadow: none; transition: border-color .2s;
+  }
+  .nav button:hover { border-color: var(--accent); }
+  .nav .month-label { font-weight: 800; font-size: 15px; color: var(--text-white); }
 
   .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-  .dow { text-align: center; font-size: 10.5px; color: #6b7078; font-weight: 700; text-transform: uppercase; padding-bottom: 4px; }
+  .dow { text-align: center; font-size: 10px; color: var(--secondary); font-weight: 700; text-transform: uppercase; padding-bottom: 4px; letter-spacing: .3px; }
   .cell {
     aspect-ratio: 1; border-radius: 9px; display: flex; align-items: center; justify-content: center;
     font-size: 12.5px; cursor: default; border: 1px solid transparent; position: relative;
   }
   .cell.empty { visibility: hidden; }
-  .cell.free { background: #22262f; color: #9aa2b1; cursor: pointer; }
-  .cell.free:hover { border-color: #37c98f; }
-  .cell.gig { background: #33270c; color: #e9a23b; font-weight: 700; }
-  .cell.manual { background: #2b1712; color: #f0725c; font-weight: 700; cursor: pointer; }
-  .cell.manual:hover { border-color: #f0725c; }
-  .cell.today { box-shadow: inset 0 0 0 2px #e9a23b; }
+  .cell.free { background: var(--bg-surface); color: var(--text-muted); cursor: pointer; border-color: var(--border-subtle); }
+  .cell.free:hover { border-color: var(--ok); }
+  .cell.gig { background: var(--gig-bg); color: var(--gig-text); font-weight: 800; }
+  .cell.manual { background: var(--danger-bg); color: var(--danger); font-weight: 800; cursor: pointer; }
+  .cell.manual:hover { border-color: var(--danger); }
+  .cell.today { box-shadow: inset 0 0 0 2px var(--accent); }
 
-  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; font-size: 11.5px; color: #9aa2b1; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 14px; font-size: 11.5px; color: var(--text-muted); }
   .legend .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 
-  .detail-box { display: none; margin-top: 14px; padding: 12px 14px; background: #22262f; border: 1px solid #2c313c; border-radius: 10px; font-size: 13px; }
-  .detail-box b { display: block; margin-bottom: 4px; }
-  .detail-box button { margin-top: 8px; background: transparent; border: 1px solid #4a2a20; color: #f0725c; padding: 7px 11px; border-radius: 7px; font-size: 12px; cursor: pointer; }
-  .detail-box .btn-block { border-color: #37c98f; color: #37c98f; }
+  .detail-box { display: none; margin-top: 14px; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: 10px; font-size: 13px; }
+  .detail-box b { display: block; margin-bottom: 4px; color: var(--text-white); }
+  .detail-box button {
+    margin-top: 8px; background: transparent; border: 1px solid rgba(240,114,92,.35); color: var(--danger);
+    padding: 7px 11px; border-radius: 7px; font-size: 12px; cursor: pointer; width: auto; box-shadow: none;
+  }
+  .detail-box .btn-block { border-color: rgba(16,185,129,.35); color: var(--ok); }
 
-  .toast { background: #12271f; border: 1px solid #1e4635; color: #5fd996; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .toast { background: var(--ok-bg); border: 1px solid rgba(16,185,129,.35); color: var(--ok); padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
   .hidden { display: none; }
 </style>
 <script src="/auth-helper.js"></script>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="/index.html">← Beranda</a>
+  <a class="back-link" href="/index.html">← Beranda</a>
 
   <div class="box hidden" id="state-no-login">
     <h1>Akses Ditolak</h1>
@@ -74,9 +96,9 @@
       <div class="grid" id="cal-grid" style="margin-top:5px;"></div>
 
       <div class="legend">
-        <span><span class="dot" style="background:#33270c;"></span>Bertugas (gig)</span>
-        <span><span class="dot" style="background:#2b1712;"></span>Diblokir manual</span>
-        <span><span class="dot" style="background:#22262f;"></span>Kosong</span>
+        <span><span class="dot" style="background:var(--gig-bg);"></span>Bertugas (gig)</span>
+        <span><span class="dot" style="background:var(--danger-bg);"></span>Diblokir manual</span>
+        <span><span class="dot" style="background:var(--bg-surface);"></span>Kosong</span>
       </div>
 
       <div class="detail-box" id="detail-box"></div>
@@ -97,7 +119,7 @@
   const DOW = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-  let viewYear, viewMonth; // viewMonth: 0-11
+  let viewYear, viewMonth;
   let scheduleData = [];
 
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -150,7 +172,7 @@
 
     if (entry && entry.sumber === 'otomatis_gig') {
       detailBox.style.display = 'block';
-      detailBox.innerHTML = `<b>${formatTgl(iso)}</b>Bertugas untuk: <b style="display:inline;">${entry.nama_acara || 'Event'}</b><br><span style="color:#9aa2b1; font-size:12px;">Jadwal dari gig hanya bisa dibuka lewat pembatalan oleh pembuat event.</span>`;
+      detailBox.innerHTML = `<b>${formatTgl(iso)}</b>Bertugas untuk: <b style="display:inline;">${entry.nama_acara || 'Event'}</b><br><span style="color:var(--text-muted); font-size:12px;">Jadwal dari gig hanya bisa dibuka lewat pembatalan oleh pembuat event.</span>`;
       return;
     }
 
@@ -161,7 +183,6 @@
       return;
     }
 
-    // Kosong -> tawarkan blokir
     detailBox.style.display = 'block';
     detailBox.innerHTML = `<b>${formatTgl(iso)}</b>Tanggal ini kosong.<br><button class="btn-block" id="btn-block">Blokir Tanggal Ini</button>`;
     document.getElementById('btn-block').addEventListener('click', () => blockDate(iso));
@@ -176,7 +197,7 @@
       const res = await authFetch('/api/schedule/manual-block', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ crew_id: userId, tanggal_mulai: iso, tanggal_selesai: iso })
+        body: JSON.stringify({ tanggal_mulai: iso, tanggal_selesai: iso })
       });
       const data = await res.json();
       if (!res.ok) { alert(data.error || 'Gagal memblokir tanggal.'); return; }
