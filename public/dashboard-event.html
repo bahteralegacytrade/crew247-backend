@@ -47,9 +47,14 @@
   .btn-pick:hover { filter: brightness(1.05); }
   .btn-cancel { background: var(--danger-bg); border: 1px solid rgba(240,114,92,.35); color: var(--danger); padding: 5px 9px; font-size: 11.5px; }
   .btn-cancel:hover { background: rgba(240,114,92,.16); }
+  .btn-outline { background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); padding: 6px 10px; font-size: 11.5px; }
+  .btn-outline:hover { border-color: var(--secondary); color: var(--text-white); }
+  .btn-danger-outline { background: transparent; border: 1px solid rgba(240,114,92,.35); color: var(--danger); padding: 6px 10px; font-size: 11.5px; }
+  .btn-danger-outline:hover { background: var(--danger-bg); }
   .full { font-size: 12px; color: var(--ok); margin-top: 10px; font-weight: 600; }
   .empty { text-align: center; color: var(--text-muted); font-size: 13.5px; padding: 30px 10px; }
   .toast { background: var(--ok-bg); border: 1px solid rgba(16,185,129,.35); color: var(--ok); padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none; }
+  .ev-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
   .hidden { display: none; }
 </style>
 <script src="/auth-helper.js"></script>
@@ -82,6 +87,8 @@
   const toast = document.getElementById('toast');
   const today = new Date().toISOString().split('T')[0];
 
+  let eventsData = [];
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -104,6 +111,10 @@
       dibatalkan: ['b-abu', 'Dibatalkan']
     };
     return map[s] || ['b-abu', s];
+  }
+
+  function adaYangDiterima(ev) {
+    return ev.posisi.some(p => p.pelamar.some(a => a.status === 'diterima'));
   }
 
   function renderPelamar(a, past) {
@@ -129,10 +140,11 @@
       const url = `/direktori.html?tanggal_mulai=${ev.tanggal_mulai}&tanggal_selesai=${ev.tanggal_selesai}&job_position_id=${p.id}`;
       aksi = `<a class="btn btn-pick" href="${url}">⚡ Pilih Kru untuk Posisi Ini</a>`;
     }
+    const editPosBtn = past ? '' : `<button class="btn btn-outline" style="margin-left:8px;padding:2px 8px;font-size:11px;" data-edit-pos="${esc(p.id)}" data-budget="${p.budget_per_orang}" data-jumlah="${p.jumlah_dibutuhkan}">✏️ Posisi</button>`;
     const pelamar = p.pelamar.length ? p.pelamar.map(a => renderPelamar(a, past)).join('') : '<div class="pos-sub" style="margin-top:8px;">Belum ada kru yang dipilih.</div>';
     return `
       <div class="pos">
-        <div class="pos-head"><span>${esc(p.posisi)}</span><span>${p.jumlah_terisi}/${p.jumlah_dibutuhkan} terisi</span></div>
+        <div class="pos-head"><span>${esc(p.posisi)}${editPosBtn}</span><span>${p.jumlah_terisi}/${p.jumlah_dibutuhkan} terisi</span></div>
         <div class="pos-sub">Budget ${rp(p.budget_per_orang)} / orang</div>
         ${pelamar}
         ${aksi}
@@ -141,6 +153,15 @@
 
   function renderEvent(ev) {
     const past = ev.tanggal_selesai < today;
+    const bisaHapus = !adaYangDiterima(ev);
+    const actions = past ? '' : `
+      <div class="ev-actions">
+        <button class="btn btn-outline" data-edit-event="${esc(ev.id)}">✏️ Edit Event</button>
+        <button class="btn btn-danger-outline" data-delete-event="${esc(ev.id)}">🗑️ Hapus Event</button>
+      </div>`;
+    const catatanKunci = (!past && !bisaHapus)
+      ? '<div class="pos-sub" style="margin-top:6px;">ℹ️ Tanggal &amp; hapus terkunci karena sudah ada kru yang diterima.</div>' : '';
+
     return `
       <div class="box">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;">
@@ -148,6 +169,8 @@
           ${past ? '<span class="badge b-abu">Selesai</span>' : '<span class="badge b-diterima">Aktif</span>'}
         </div>
         <div class="ev-meta">${tgl(ev.tanggal_mulai)} - ${tgl(ev.tanggal_selesai)} · ${esc(ev.lokasi)}, ${esc(ev.kota)}</div>
+        ${actions}
+        ${catatanKunci}
         ${ev.posisi.map(p => renderPosisi(ev, p, past)).join('')}
       </div>`;
   }
@@ -158,8 +181,9 @@
       const res = await authFetch('/api/events/pembuat/' + userId);
       const data = await res.json();
       if (!res.ok) { list.innerHTML = '<div class="empty">Gagal memuat data event.</div>'; return; }
-      list.innerHTML = data.data.length
-        ? data.data.map(renderEvent).join('')
+      eventsData = data.data;
+      list.innerHTML = eventsData.length
+        ? eventsData.map(renderEvent).join('')
         : '<div class="empty">Belum ada event yang Anda posting.</div>';
     } catch (err) {
       list.innerHTML = '<div class="empty">Tidak bisa terhubung ke server.</div>';
@@ -177,9 +201,98 @@
     } catch (err) { alert('Tidak bisa terhubung ke server.'); }
   }
 
+  async function editEvent(eventId) {
+    const ev = eventsData.find(e => e.id === eventId);
+    if (!ev) return;
+
+    const namaAcara = prompt('Nama acara:', ev.nama_acara);
+    if (namaAcara === null) return;
+    const lokasi = prompt('Lokasi/venue:', ev.lokasi);
+    if (lokasi === null) return;
+    const kota = prompt('Kota:', ev.kota);
+    if (kota === null) return;
+
+    const bisaUbahTanggal = !adaYangDiterima(ev);
+    let tanggalMulai = ev.tanggal_mulai;
+    let tanggalSelesai = ev.tanggal_selesai;
+
+    if (bisaUbahTanggal) {
+      const tm = prompt('Tanggal mulai (format YYYY-MM-DD):', ev.tanggal_mulai);
+      if (tm === null) return;
+      const ts = prompt('Tanggal selesai (format YYYY-MM-DD):', ev.tanggal_selesai);
+      if (ts === null) return;
+      tanggalMulai = tm;
+      tanggalSelesai = ts;
+    } else {
+      alert('Tanggal tidak bisa diubah karena sudah ada kru yang diterima di event ini.');
+    }
+
+    const jamCallTime = prompt('Jam call time (format HH:MM):', ev.jam_call_time ? ev.jam_call_time.slice(0,5) : '09:00');
+    if (jamCallTime === null) return;
+    const zonaWaktu = prompt('Zona waktu (WIB/WITA/WIT):', ev.zona_waktu || 'WIB');
+    if (zonaWaktu === null) return;
+
+    const payload = { nama_acara: namaAcara, lokasi, kota, jam_call_time: jamCallTime, zona_waktu: zonaWaktu };
+    if (bisaUbahTanggal) {
+      payload.tanggal_mulai = tanggalMulai;
+      payload.tanggal_selesai = tanggalSelesai;
+    }
+
+    try {
+      const res = await authFetch('/api/events/' + eventId, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Gagal mengedit event.'); return; }
+      showToast('Event berhasil diperbarui.');
+      load();
+    } catch (err) { alert('Tidak bisa terhubung ke server.'); }
+  }
+
+  async function deleteEvent(eventId) {
+    if (!confirm('Hapus event ini sepenuhnya? Tindakan ini tidak bisa dibatalkan.')) return;
+    try {
+      const res = await authFetch('/api/events/' + eventId, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Gagal menghapus event.'); return; }
+      showToast('Event berhasil dihapus.');
+      load();
+    } catch (err) { alert('Tidak bisa terhubung ke server.'); }
+  }
+
+  async function editPosisi(posId, currentBudget, currentJumlah) {
+    const budget = prompt('Budget per orang (IDR):', currentBudget);
+    if (budget === null) return;
+    const jumlah = prompt('Jumlah dibutuhkan:', currentJumlah);
+    if (jumlah === null) return;
+
+    try {
+      const res = await authFetch('/api/job-positions/' + posId, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ budget_per_orang: parseInt(budget) || 0, jumlah_dibutuhkan: parseInt(jumlah) || 1 })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Gagal mengedit posisi.'); return; }
+      showToast('Posisi berhasil diperbarui.');
+      load();
+    } catch (err) { alert('Tidak bisa terhubung ke server.'); }
+  }
+
   list.addEventListener('click', e => {
-    const b = e.target.closest('[data-cancel]');
-    if (b) cancelApp(b.dataset.cancel);
+    const cancelBtn = e.target.closest('[data-cancel]');
+    if (cancelBtn) return cancelApp(cancelBtn.dataset.cancel);
+
+    const editEventBtn = e.target.closest('[data-edit-event]');
+    if (editEventBtn) return editEvent(editEventBtn.dataset.editEvent);
+
+    const deleteEventBtn = e.target.closest('[data-delete-event]');
+    if (deleteEventBtn) return deleteEvent(deleteEventBtn.dataset.deleteEvent);
+
+    const editPosBtn = e.target.closest('[data-edit-pos]');
+    if (editPosBtn) return editPosisi(editPosBtn.dataset.editPos, editPosBtn.dataset.budget, editPosBtn.dataset.jumlah);
   });
 
   if (!userId) {

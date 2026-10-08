@@ -86,10 +86,14 @@ router.get('/api/applications/crew/:crew_id', requireAuth, async (req, res) => {
                 ej.tanggal_selesai,
                 ej.lokasi,
                 ej.kota,
-                ej.zona_waktu
+                ej.zona_waktu,
+                pep.nama_organisasi,
+                pep.jenis AS jenis_organisasi,
+                pep.logo_url AS organisasi_logo_url
             FROM applications a
             JOIN job_positions jp ON a.job_position_id = jp.id
             JOIN event_jobs ej ON jp.event_job_id = ej.id
+            LEFT JOIN pembuat_event_profiles pep ON ej.pembuat_event_id = pep.user_id
             WHERE a.crew_id = $1 AND a.status = 'menunggu'
             ORDER BY a.created_at DESC;
         `;

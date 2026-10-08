@@ -143,7 +143,7 @@ router.get('/api/events/pembuat/:pembuat_event_id', requireAuth, async (req, res
     }
     try {
         const ev = await pool.query(
-            `SELECT id, nama_acara, tanggal_mulai, tanggal_selesai, lokasi, kota, status_event
+            `SELECT id, nama_acara, tanggal_mulai, tanggal_selesai, jam_call_time, zona_waktu, lokasi, kota, status_event
              FROM event_jobs WHERE pembuat_event_id = $1 ORDER BY tanggal_mulai DESC`,
             [pembuat_event_id]
         );
@@ -180,7 +180,7 @@ router.get('/api/events/pembuat/:pembuat_event_id', requireAuth, async (req, res
 // ENDPOINT BARU: Edit info ringan event (BUKAN tanggal)
 router.patch('/api/events/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
-    const { nama_acara, lokasi, kota, jam_call_time, zona_waktu } = req.body;
+    const { nama_acara, lokasi, kota, jam_call_time, zona_waktu, tanggal_mulai, tanggal_selesai } = req.body;
 
     try {
         const check = await pool.query('SELECT pembuat_event_id FROM event_jobs WHERE id = $1', [id]);
@@ -191,10 +191,25 @@ router.patch('/api/events/:id', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Anda tidak berhak mengedit event ini.' });
         }
 
+        // Kalau tanggal ikut diubah, pastikan belum ada kru yang DITERIMA di event ini
+        if (tanggal_mulai || tanggal_selesai) {
+            const acceptedCheck = await pool.query(
+                `SELECT 1 FROM applications a 
+                 JOIN job_positions jp ON a.job_position_id = jp.id 
+                 WHERE jp.event_job_id = $1 AND a.status = 'diterima' LIMIT 1`,
+                [id]
+            );
+            if (acceptedCheck.rows.length > 0) {
+                return res.status(400).json({ error: 'Tanggal tidak bisa diubah karena sudah ada kru yang diterima. Batalkan gig tersebut dulu.' });
+            }
+        }
+
         const result = await pool.query(
-            `UPDATE event_jobs SET nama_acara = $1, lokasi = $2, kota = $3, jam_call_time = $4, zona_waktu = $5
-             WHERE id = $6 RETURNING *`,
-            [nama_acara, lokasi, kota, jam_call_time, zona_waktu, id]
+            `UPDATE event_jobs SET 
+                nama_acara = $1, lokasi = $2, kota = $3, jam_call_time = $4, zona_waktu = $5,
+                tanggal_mulai = COALESCE($6, tanggal_mulai), tanggal_selesai = COALESCE($7, tanggal_selesai)
+             WHERE id = $8 RETURNING *`,
+            [nama_acara, lokasi, kota, jam_call_time, zona_waktu, tanggal_mulai || null, tanggal_selesai || null, id]
         );
 
         return res.status(200).json({ success: true, message: 'Event berhasil diperbarui.', data: result.rows[0] });
@@ -235,6 +250,54 @@ router.patch('/api/job-positions/:id', requireAuth, async (req, res) => {
     } catch (error) {
         console.error('[Crew247.id] Gagal mengedit posisi:', error);
         return res.status(500).json({ error: 'Terjadi kesalahan pada server saat mengedit posisi.' });
+    }
+});
+
+// ENDPOINT BARU: Hapus event sepenuhnya (hanya kalau belum ada kru yang diterima)
+router.delete('/api/events/:id', requireAuth, async (req, res) => {
+    const { id } = req.params;
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const check = await client.query('SELECT pembuat_event_id FROM event_jobs WHERE id = $1', [id]);
+        if (check.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Event tidak ditemukan.' });
+        }
+        if (check.rows[0].pembuat_event_id !== req.user.user_id) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Anda tidak berhak menghapus event ini.' });
+        }
+
+        const acceptedCheck = await client.query(
+            `SELECT 1 FROM applications a 
+             JOIN job_positions jp ON a.job_position_id = jp.id 
+             WHERE jp.event_job_id = $1 AND a.status = 'diterima' LIMIT 1`,
+            [id]
+        );
+        if (acceptedCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ error: 'Event tidak bisa dihapus karena masih ada kru yang diterima. Batalkan dulu semua gig di event ini.' });
+        }
+
+        await client.query(
+            `DELETE FROM applications WHERE job_position_id IN (SELECT id FROM job_positions WHERE event_job_id = $1)`,
+            [id]
+        );
+        await client.query(`DELETE FROM job_positions WHERE event_job_id = $1`, [id]);
+        await client.query(`DELETE FROM event_jobs WHERE id = $1`, [id]);
+
+        await client.query('COMMIT');
+        return res.status(200).json({ success: true, message: 'Event berhasil dihapus.' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('[Crew247.id] Gagal menghapus event:', error);
+        return res.status(500).json({ error: 'Terjadi kesalahan pada server saat menghapus event.' });
+    } finally {
+        client.release();
     }
 });
 

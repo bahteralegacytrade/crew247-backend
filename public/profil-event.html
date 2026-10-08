@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crew247.id - Profil Organisasi</title>
+  <style>
+    :root {
+      --bg-page: #0A0D0B; --bg-card: #242C2C; --bg-surface: #171d1d;
+      --accent: #E26D0A; --accent-hover: #f07b1a; --secondary: #688273;
+      --text-white: #F4F7F5; --text-muted: #A3B5AA; --border-subtle: rgba(104,130,115,.28);
+      --ok: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-page); color: var(--text-white);
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; padding: 24px 16px; -webkit-font-smoothing: antialiased;
+    }
+    .back-link { width: 100%; max-width: 420px; margin: 0 0 14px; color: var(--text-muted); font-size: 13px; text-decoration: none; display: inline-block; }
+    .back-link:hover { color: var(--accent); }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 18px;
+      padding: 28px 24px; width: 100%; max-width: 420px; position: relative;
+      box-shadow: 0 12px 40px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card::before, .card::after {
+      content: ""; position: absolute; top: 14px; width: 7px; height: 7px; border-radius: 50%;
+      background: #141818; border: 1px solid var(--border-subtle);
+    }
+    .card::before { left: 14px; } .card::after { right: 14px; }
+    h1 { color: var(--text-white); font-size: 20px; font-weight: 800; margin: 0 0 6px; letter-spacing: -.2px; }
+    p.sub { color: var(--text-muted); font-size: 13.5px; margin: 0 0 20px; line-height: 1.5; }
+    a { color: var(--accent); }
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+    input, select, textarea {
+      width: 100%; background: var(--bg-surface); border: 1px solid var(--border-subtle); color: var(--text-white);
+      padding: 11px 13px; border-radius: 10px; font-size: 14.5px; margin-bottom: 14px; font-family: inherit;
+      outline: none; transition: border-color .2s, box-shadow .2s;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(226,109,10,.25); }
+    button {
+      width: 100%; background: var(--accent); color: #fff; border: none; padding: 13px;
+      border-radius: 10px; font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 4px;
+      box-shadow: 0 4px 15px rgba(226,109,10,.35); transition: background .2s, transform .1s;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:active { transform: scale(.99); }
+    button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+    .error-box {
+      background: rgba(226,109,10,.12); border: 1px solid rgba(226,109,10,.4); color: #ff9b50;
+      padding: 11px 14px; border-radius: 9px; font-size: 13px; margin-bottom: 16px; display: none; line-height: 1.4;
+    }
+    .success-box {
+      background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.35); color: var(--ok);
+      padding: 12px 14px; border-radius: 9px; font-size: 13.5px; margin-bottom: 16px; display: none; line-height: 1.4;
+    }
+    .hidden { display: none !important; }
+    .link-btn { display: block; text-align: center; margin-top: 14px; font-size: 13.5px; color: var(--text-muted); text-decoration: none; }
+    .link-btn:hover { color: var(--accent); }
+    .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .logo-row img, .logo-row .logo-placeholder {
+      width: 60px; height: 60px; border-radius: 12px; object-fit: cover;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+      display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--text-muted); text-align: center;
+    }
+    .logo-row input[type="file"] { width: auto; margin-bottom: 0; background: none; border: none; padding: 0; color: var(--text-muted); font-size: 12.5px; }
+  </style>
+  <script src="/auth-helper.js"></script>
+</head>
+<body>
+
+  <a href="/index.html" class="back-link">&larr; Beranda</a>
+
+  <div class="card hidden" id="state-no-login">
+    <h1>Akses Ditolak</h1>
+    <p class="sub">Anda belum masuk ke dalam sistem Crew247.id.</p>
+    <a href="/login.html">Silakan login dulu di sini &rarr;</a>
+  </div>
+
+  <div class="card hidden" id="state-form">
+    <h1 id="form-title">Lengkapi Profil Organisasi</h1>
+    <p class="sub">Profil ini akan dilihat kru saat Anda mengirimkan tawaran gig — bantu mereka mengenal Anda sebelum menerima.</p>
+
+    <div id="error-box" class="error-box"></div>
+    <div id="success-box" class="success-box"></div>
+
+    <form id="profile-form">
+      <label>Logo / Foto Profil (opsional)</label>
+      <div class="logo-row">
+        <img id="logo-preview" src="" alt="" style="display:none;">
+        <div id="logo-placeholder" class="logo-placeholder">Belum ada</div>
+        <input type="file" id="logo_input" accept="image/*">
+      </div>
+      <input type="hidden" id="logo_url">
+
+      <label>Nama Organisasi / EO *</label>
+      <input type="text" id="nama_organisasi" required>
+
+      <label>Jenis *</label>
+      <select id="jenis" required>
+        <option value="">-- Pilih Jenis --</option>
+        <option value="Event Organizer">Event Organizer</option>
+        <option value="Venue">Venue</option>
+        <option value="Brand/Korporat">Brand / Korporat</option>
+        <option value="Perorangan">Perorangan</option>
+      </select>
+
+      <label>Kota *</label>
+      <input type="text" id="kota" required>
+
+      <label>Bio / Deskripsi Singkat</label>
+      <textarea id="bio" placeholder="Ceritakan tentang organisasi/acara yang biasa Anda buat..."></textarea>
+
+      <button type="submit" id="btn-submit">Simpan Profil</button>
+    </form>
+
+    <a href="/index.html" class="link-btn">&larr; Kembali ke Beranda</a>
+  </div>
+
+<script>
+  const userId = localStorage.getItem('crew247_user_id');
+
+  const stateNoLogin = document.getElementById('state-no-login');
+  const stateForm = document.getElementById('state-form');
+  const errorBox = document.getElementById('error-box');
+  const successBox = document.getElementById('success-box');
+  const formTitle = document.getElementById('form-title');
+
+  function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; successBox.style.display = 'none'; }
+  function showSuccess(msg) { successBox.textContent = msg; successBox.style.display = 'block'; errorBox.style.display = 'none'; }
+
+  if (!userId) {
+    stateNoLogin.classList.remove('hidden');
+  } else {
+    stateForm.classList.remove('hidden');
+    loadExistingProfile();
+  }
+
+  document.getElementById('logo_input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (ev) => {
+      img.onload = () => {
+        const size = 256;
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const minSide = Math.min(img.width, img.height);
+        const sx = (img.width - minSide) / 2;
+        const sy = (img.height - minSide) / 2;
+        ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        document.getElementById('logo_url').value = dataUrl;
+
+        const preview = document.getElementById('logo-preview');
+        preview.src = dataUrl;
+        preview.style.display = 'block';
+        document.getElementById('logo-placeholder').style.display = 'none';
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  async function loadExistingProfile() {
+    try {
+      const res = await authFetch('/api/pembuat-event/profile/' + userId);
+
+      if (res.status === 404) {
+        formTitle.textContent = 'Lengkapi Profil Organisasi';
+        return;
+      }
+      if (!res.ok) {
+        showError('Gagal memuat data profil.');
+        return;
+      }
+
+      const result = await res.json();
+      const data = result.data;
+
+      formTitle.textContent = 'Edit Profil Organisasi';
+      document.getElementById('nama_organisasi').value = data.nama_organisasi || '';
+      document.getElementById('jenis').value = data.jenis || '';
+      document.getElementById('kota').value = data.kota || '';
+      document.getElementById('bio').value = data.bio || '';
+      document.getElementById('logo_url').value = data.logo_url || '';
+      if (data.logo_url) {
+        const preview = document.getElementById('logo-preview');
+        preview.src = data.logo_url;
+        preview.style.display = 'block';
+        document.getElementById('logo-placeholder').style.display = 'none';
+      }
+
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+    }
+  }
+
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+    successBox.style.display = 'none';
+
+    const payload = {
+      nama_organisasi: document.getElementById('nama_organisasi').value.trim(),
+      jenis: document.getElementById('jenis').value,
+      kota: document.getElementById('kota').value.trim(),
+      bio: document.getElementById('bio').value.trim(),
+      logo_url: document.getElementById('logo_url').value.trim() || null
+    };
+
+    const btn = document.getElementById('btn-submit');
+    btn.disabled = true;
+    btn.textContent = 'Menyimpan...';
+
+    try {
+      const res = await authFetch('/api/pembuat-event/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Gagal menyimpan profil.');
+        btn.disabled = false;
+        btn.textContent = 'Simpan Profil';
+        return;
+      }
+
+      showSuccess('Profil organisasi berhasil disimpan!');
+      formTitle.textContent = 'Edit Profil Organisasi';
+      btn.disabled = false;
+      btn.textContent = 'Simpan Profil';
+
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
+      btn.disabled = false;
+      btn.textContent = 'Simpan Profil';
+    }
+  });
+</script>
+
+</body>
+</html>

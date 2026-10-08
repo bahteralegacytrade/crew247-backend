@@ -141,9 +141,21 @@
     }
   }
 
-  function renderOfferCard(offer) {
+    function renderOfferCard(offer) {
+    const logoHtml = offer.organisasi_logo_url
+      ? `<img src="${offer.organisasi_logo_url}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex:none;">`
+      : `<div style="width:32px;height:32px;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border-subtle);flex:none;"></div>`;
+    const namaOrg = offer.nama_organisasi || 'Organisasi belum isi profil';
+
     return `
       <div class="offer-card" id="offer-${offer.application_id}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border-subtle);">
+          ${logoHtml}
+          <div>
+            <div style="font-weight:700;font-size:13px;color:var(--text-white);">${namaOrg}</div>
+            <div style="font-size:11px;color:var(--text-muted);">${offer.jenis_organisasi || ''}</div>
+          </div>
+        </div>
         <div class="offer-title">${offer.nama_acara}</div>
         <div class="offer-detail"><b>Posisi:</b> ${offer.posisi}</div>
         <div class="offer-detail"><b>Tanggal:</b> ${fmtTanggal(offer.tanggal_mulai)} - ${fmtTanggal(offer.tanggal_selesai)}</div>
