@@ -58,6 +58,7 @@
   .hidden { display: none; }
 </style>
 <script src="/auth-helper.js"></script>
+<script src="/roles.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -137,7 +138,8 @@
     if (past) aksi = '';
     else if (penuh) aksi = '<div class="full">✓ Slot terpenuhi</div>';
     else {
-      const url = `/direktori.html?tanggal_mulai=${ev.tanggal_mulai}&tanggal_selesai=${ev.tanggal_selesai}&job_position_id=${p.id}`;
+      const tg = tagFromLabel(p.posisi);
+      const url = `/direktori.html?tanggal_mulai=${ev.tanggal_mulai}&tanggal_selesai=${ev.tanggal_selesai}&job_position_id=${p.id}${tg ? '&tag=' + tg : ''}`;
       aksi = `<a class="btn btn-pick" href="${url}">⚡ Pilih Kru untuk Posisi Ini</a>`;
     }
     const editPosBtn = past ? '' : `<button class="btn btn-outline" style="margin-left:8px;padding:2px 8px;font-size:11px;" data-edit-pos="${esc(p.id)}" data-budget="${p.budget_per_orang}" data-jumlah="${p.jumlah_dibutuhkan}">✏️ Posisi</button>`;

@@ -30,3 +30,9 @@ function peranLabel(tag) {
   const r = ROLES.find(r => r.tag === tag);
   return r ? r.label : tag;
 }
+
+// Nama peran posisi (mis. "Stage Manager") -> hashtag ("StageManager"). Kosong kalau tidak dikenal.
+function tagFromLabel(label) {
+  const r = ROLES.find(r => r.label === label);
+  return r ? r.tag : '';
+}

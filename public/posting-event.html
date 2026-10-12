@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Crew247.id - Posting Lowongan Event</title>
   <script src="/auth-helper.js"></script>
+  <script src="/roles.js"></script>
   <style>
     :root {
       --bg-page: #0A0D0B; --bg-card: #242C2C; --bg-surface: #171d1d; --bg-quote: #393720;
@@ -177,11 +178,7 @@
     errorBox.style.display = 'block';
   }
 
-    const PERAN_OPTIONS = [
-    'FOH Audio Engineer', 'Monitor Engineer', 'Lighting Designer',
-    'Stage Manager', 'Backline Tech', 'VJ & LED Tech',
-    'Crowd Control', 'Talent Coordinator', 'MC / Host', 'Rigger', 'Stage Crew / Runner'
-  ];
+  const PERAN_OPTIONS = ROLES.map(r => r.label);
 
   function addPositionRow() {
     const row = document.createElement('div');
@@ -264,9 +261,11 @@
         return;
       }
 
-      const firstPositionId = data.data.posisi[0].id;
+      const firstPosition = data.data.posisi[0];
+      const firstTag = tagFromLabel(firstPosition.posisi);
+      const tagParam = firstTag ? `&tag=${firstTag}` : '';
 
-      window.location.href = `/direktori.html?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}&job_position_id=${firstPositionId}`;
+      window.location.href = `/direktori.html?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}&job_position_id=${firstPosition.id}${tagParam}`;
 
     } catch (err) {
       showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');

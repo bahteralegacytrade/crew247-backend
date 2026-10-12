@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 const router = express.Router();
+const { loginLimiter } = require('../middleware/rateLimit');
 
 function makeToken(user) {
     return jwt.sign(
@@ -162,7 +163,7 @@ router.post('/api/auth/set-password', async (req, res) => {
 });
 
 // 4. ENDPOINT BARU: Login pakai Nomor HP + Password (TANPA OTP)
-router.post('/api/auth/login', async (req, res) => {
+router.post('/api/auth/login', loginLimiter, async (req, res) => {
     const { no_hp, password } = req.body;
 
     if (!no_hp || !password) {
