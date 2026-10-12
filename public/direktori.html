@@ -51,6 +51,20 @@
     button:hover { background: var(--accent-hover); }
     button:active { transform: scale(.99); }
     button:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+    .hash-input { position: relative; }
+    .hash-input span { position: absolute; left: 12px; top: 10px; color: var(--accent); font-weight: 800; font-size: 14px; }
+    .hash-input input { padding-left: 26px; }
+
+    .quick-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 14px; }
+    .qchip {
+      width: auto; margin: 0; padding: 5px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 700;
+      background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border-subtle); box-shadow: none;
+    }
+    .qchip:hover { background: var(--bg-surface); border-color: var(--secondary); color: var(--text-white); }
+    .qchip.on { background: rgba(226,109,10,.15); border-color: var(--accent); color: var(--accent); }
+    .qchip.on:hover { background: rgba(226,109,10,.22); }
+
     .error-box {
       background: rgba(226,109,10,.12); border: 1px solid rgba(226,109,10,.4); color: #ff9b50;
       padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; display: none;
@@ -64,20 +78,41 @@
       background: var(--bg-surface); border: 1px dashed var(--border-subtle); border-radius: 9px;
       padding: 10px 14px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;
     }
+
     .crew-card {
       background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 14px;
-      padding: 16px; margin-bottom: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      padding: 16px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.35);
     }
-    .crew-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .crew-top { display: flex; gap: 12px; align-items: flex-start; }
+    .avatar {
+      width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: none;
+      background: var(--bg-surface); border: 1px solid var(--border-subtle);
+    }
+    .avatar-ph {
+      display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px;
+      color: var(--accent); background: rgba(226,109,10,.1);
+    }
+    .crew-main { flex: 1; min-width: 0; }
     .crew-name { font-weight: 700; font-size: 15px; }
     .crew-role { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
     .rating-row { display: flex; align-items: center; gap: 5px; margin-top: 6px; }
     .rating-row .stars { color: var(--gold); font-size: 12px; letter-spacing: 1px; }
     .rating-row .score { font-size: 12.5px; font-weight: 700; color: var(--text-white); }
     .rating-row .count { font-size: 11.5px; color: var(--text-muted); }
-    .rate { font-weight: 800; font-size: 14px; color: var(--accent); white-space: nowrap; text-align: right; }
+    .rate { font-weight: 800; font-size: 14px; color: var(--accent); white-space: nowrap; text-align: right; flex: none; }
     .rate .unit { font-size: 10px; font-weight: 400; color: var(--text-muted); }
+
+    .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .tag-chip {
+      width: auto; margin: 0; padding: 4px 10px; border-radius: 100px; font-size: 11.5px; font-weight: 700;
+      background: rgba(226,109,10,.12); color: var(--accent); border: 1px solid rgba(226,109,10,.35); box-shadow: none;
+    }
+    .tag-chip:hover { background: rgba(226,109,10,.22); }
+
+    .exp-list { margin-top: 10px; }
+    .exp-line { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .exp-line b { color: var(--accent); font-weight: 700; }
+
     .tags { margin-top: 10px; }
     .tag {
       display: inline-block; background: var(--bg-surface); border: 1px solid var(--border-subtle);
@@ -90,6 +125,7 @@
     .hidden { display: none; }
   </style>
   <script src="/auth-helper.js"></script>
+  <script src="/roles.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -112,16 +148,10 @@
         </div>
       </div>
 
-      <label>Peran Utama</label>
-      <select id="peran_utama">
-        <option value="">Semua Peran</option>
-        <option value="FOH Audio Engineer">FOH Audio Engineer</option>
-        <option value="Monitor Engineer">Monitor Engineer</option>
-        <option value="Lighting Designer">Lighting Designer</option>
-        <option value="Stage Manager">Stage Manager</option>
-        <option value="Backline Tech">Backline Tech</option>
-        <option value="VJ & LED Tech">VJ & LED Tech</option>
-      </select>
+      <label>Hashtag Peran / Pengalaman</label>
+      <div class="hash-input"><span>#</span><input type="text" id="tag" list="tag-list" placeholder="StageManager, FOH, VJ, MC ..." autocomplete="off"></div>
+      <div class="quick-tags" id="quick-tags"></div>
+      <datalist id="tag-list"></datalist>
 
       <label>Kota Domisili</label>
       <input type="text" id="kota" placeholder="Kosongkan untuk semua kota">
@@ -143,28 +173,64 @@
   const metaInfo = document.getElementById('meta-info');
   const resultsContainer = document.getElementById('results-container');
   const noPositionNote = document.getElementById('no-position-note');
+  const tagInput = document.getElementById('tag');
 
   function showError(msg) { errorBox.textContent = msg; errorBox.style.display = 'block'; }
   function hideError() { errorBox.style.display = 'none'; }
   function fmtRupiah(angka) { return 'Rp ' + Number(angka).toLocaleString('id-ID'); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function initials(nama) {
+    return String(nama || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  }
 
   const params = new URLSearchParams(window.location.search);
   const qMulai = params.get('tanggal_mulai');
   const qSelesai = params.get('tanggal_selesai');
+  const qTag = params.get('tag');
   const jobPositionId = params.get('job_position_id');
 
   if (qMulai) document.getElementById('tanggal_mulai').value = qMulai;
   if (qSelesai) document.getElementById('tanggal_selesai').value = qSelesai;
+  if (qTag) tagInput.value = canonTag(qTag);
+
+  // Saran hashtag
+  document.getElementById('tag-list').innerHTML = ROLES.map(r => `<option value="${r.tag}">${r.label}</option>`).join('');
+
+  // Chip hashtag cepat
+  function renderQuickTags() {
+    const aktif = normTag(tagInput.value).toLowerCase();
+    document.getElementById('quick-tags').innerHTML =
+      `<button type="button" class="qchip ${aktif === '' ? 'on' : ''}" data-tag="">Semua</button>` +
+      ROLES.map(r => `<button type="button" class="qchip ${aktif === r.tag.toLowerCase() ? 'on' : ''}" data-tag="${r.tag}">#${r.tag}</button>`).join('');
+  }
+  document.getElementById('quick-tags').addEventListener('click', (e) => {
+    const chip = e.target.closest('.qchip');
+    if (!chip) return;
+    tagInput.value = chip.dataset.tag;
+    cariKru();
+  });
+  renderQuickTags();
 
   if (!jobPositionId) {
     noPositionNote.classList.remove('hidden');
   }
 
-  if (qMulai && qSelesai) {
-    cariKru();
-  }
-
   document.getElementById('btn-cari').addEventListener('click', cariKru);
+  tagInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') cariKru(); });
+
+  // Klik hashtag di kartu = filter; klik Pilih Kru = kirim tawaran
+  resultsContainer.addEventListener('click', (e) => {
+    const chip = e.target.closest('.tag-chip');
+    if (chip) {
+      tagInput.value = chip.dataset.tag;
+      cariKru();
+      return;
+    }
+    const pilih = e.target.closest('.btn-pilih');
+    if (pilih && !pilih.disabled) pilihKru(pilih);
+  });
 
   async function cariKru() {
     hideError();
@@ -173,21 +239,23 @@
 
     const tanggalMulai = document.getElementById('tanggal_mulai').value;
     const tanggalSelesai = document.getElementById('tanggal_selesai').value;
-    const peranUtama = document.getElementById('peran_utama').value;
+    const tag = normTag(tagInput.value);
     const kota = document.getElementById('kota').value.trim();
+
+    renderQuickTags();
 
     if (!tanggalMulai || !tanggalSelesai) {
       showError('Tanggal mulai dan tanggal selesai wajib diisi.');
       return;
     }
 
-    const btn = document.getElementById('btn-cari');
-    btn.disabled = true;
-    btn.textContent = 'Mencari...';
+    const btnCari = document.getElementById('btn-cari');
+    btnCari.disabled = true;
+    btnCari.textContent = 'Mencari...';
 
     try {
       let url = `/api/crew/directory?tanggal_mulai=${tanggalMulai}&tanggal_selesai=${tanggalSelesai}`;
-      if (peranUtama) url += `&peran_utama=${encodeURIComponent(peranUtama)}`;
+      if (tag) url += `&tag=${encodeURIComponent(tag)}`;
       if (kota) url += `&kota=${encodeURIComponent(kota)}`;
 
       const res = await fetch(url);
@@ -195,43 +263,53 @@
 
       if (!res.ok) {
         showError(data.error || 'Gagal memuat direktori kru.');
-        btn.disabled = false;
-        btn.textContent = 'Cari Kru Tersedia';
+        btnCari.disabled = false;
+        btnCari.textContent = 'Cari Kru Tersedia';
         return;
       }
 
       const totalTersedia = data.meta.total_kru_tersedia;
       const totalDisembunyikan = data.meta.total_kru_disembunyikan_karena_bentrok;
       const totalKeseluruhan = totalTersedia + totalDisembunyikan;
+      const labelTag = tag ? ` untuk <b>#${esc(canonTag(tag))}</b>` : '';
 
-      metaInfo.innerHTML = `<b>${totalTersedia} dari ${totalKeseluruhan} kru</b> tersedia di tanggal ini. <b>${totalDisembunyikan} kru</b> disembunyikan karena bentrok jadwal.`;
+      metaInfo.innerHTML = `<b>${totalTersedia} dari ${totalKeseluruhan} kru</b>${labelTag} tersedia di tanggal ini. <b>${totalDisembunyikan} kru</b> disembunyikan karena bentrok jadwal.`;
       metaInfo.style.display = 'block';
 
       if (data.data.length === 0) {
         resultsContainer.innerHTML = `<div class="empty-state">Tidak ada kru tersedia di tanggal ini. Coba tanggal atau filter lain.</div>`;
       } else {
         resultsContainer.innerHTML = data.data.map(renderCrewCard).join('');
-        document.querySelectorAll('.btn-pilih').forEach(btn => {
-          btn.addEventListener('click', () => pilihKru(btn));
-        });
       }
 
-      btn.disabled = false;
-      btn.textContent = 'Cari Kru Tersedia';
+      btnCari.disabled = false;
+      btnCari.textContent = 'Cari Kru Tersedia';
 
     } catch (err) {
       showError('Tidak bisa terhubung ke server. Pastikan server backend menyala.');
-      btn.disabled = false;
-      btn.textContent = 'Cari Kru Tersedia';
+      btnCari.disabled = false;
+      btnCari.textContent = 'Cari Kru Tersedia';
     }
   }
 
   function renderCrewCard(crew) {
-    const tags = (crew.keahlian || []).map(k => `<span class="tag">${k}</span>`).join('');
+    const avatar = crew.foto_url
+      ? `<img class="avatar" src="${esc(crew.foto_url)}" alt="">`
+      : `<div class="avatar avatar-ph">${esc(initials(crew.nama_panggung || crew.nama_lengkap))}</div>`;
+
+    const peranTags = (crew.peran_list || [])
+      .map(t => `<button type="button" class="tag-chip" data-tag="${esc(t)}">#${esc(t)}</button>`).join('');
+
+    const pengalaman = Array.isArray(crew.pengalaman) ? crew.pengalaman : [];
+    const expLines = pengalaman.slice(0, 3)
+      .map(p => `<div class="exp-line"><b>#${esc(p.tag)}</b> di ${esc(p.event)} ${esc(p.tahun)}</div>`).join('');
+    const expMore = pengalaman.length > 3 ? `<div class="exp-line">+${pengalaman.length - 3} pengalaman lainnya</div>` : '';
+
+    const keahlian = (crew.keahlian || []).map(k => `<span class="tag">${esc(k)}</span>`).join('');
 
     let actionHtml = '';
     if (jobPositionId) {
-      actionHtml = `<button class="btn-pilih" data-crew-id="${crew.user_id}">⚡ Pilih Kru</button>`;
+      actionHtml = `<button class="btn-pilih" data-crew-id="${esc(crew.user_id)}">⚡ Pilih Kru</button>`;
     } else {
       actionHtml = `<div class="no-job-text">Buka dari halaman posting event untuk memilih kru.</div>`;
     }
@@ -243,14 +321,17 @@
     return `
       <div class="crew-card">
         <div class="crew-top">
-          <div>
-            <div class="crew-name">${crew.nama_lengkap} <span style="color:var(--text-muted); font-weight:400;">(${crew.nama_panggung})</span></div>
-            <div class="crew-role">${crew.peran_utama} · ${crew.kota}</div>
+          ${avatar}
+          <div class="crew-main">
+            <div class="crew-name">${esc(crew.nama_lengkap)} <span style="color:var(--text-muted); font-weight:400;">(${esc(crew.nama_panggung)})</span></div>
+            <div class="crew-role">${esc(crew.peran_utama)} · ${esc(crew.kota)}</div>
             ${ratingHtml}
           </div>
           <div class="rate">${fmtRupiah(crew.rate_harian)}<br><span class="unit">/hari</span></div>
         </div>
-        <div class="tags">${tags}</div>
+        ${peranTags ? `<div class="tag-chips">${peranTags}</div>` : ''}
+        ${expLines ? `<div class="exp-list">${expLines}${expMore}</div>` : ''}
+        ${keahlian ? `<div class="tags">${keahlian}</div>` : ''}
         ${actionHtml}
       </div>
     `;
@@ -287,6 +368,10 @@
       btn.disabled = false;
       btn.textContent = '⚡ Pilih Kru';
     }
+  }
+
+  if (qMulai && qSelesai) {
+    cariKru();
   }
 </script>
 </body>

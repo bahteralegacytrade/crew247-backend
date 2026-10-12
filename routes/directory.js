@@ -1,89 +1,85 @@
 const express = require('express');
-const pool = require('../db'); // Menggunakan koneksi pooler Supabase yang benar (naik satu tingkat ke luar folder routes)
+const pool = require('../db');
 const router = express.Router();
 
-// ENDPOINT: Direktori Kru dengan Filter Otomatis Tanggal & Transparansi Jumlah Disembunyikan
-router.get('/api/crew/directory', async (req, res) => {
-    const { tanggal_mulai, tanggal_selesai, peran_utama, kota } = req.query;
+function normTag(s) {
+    return String(s || '').replace(/^#/, '').replace(/[^A-Za-z0-9]/g, '').slice(0, 30);
+}
 
-    // Validasi wajib: Pembuat event harus memasukkan tanggal acara yang dicari
+// ENDPOINT: Direktori kru - filter otomatis tanggal + hashtag peran/pengalaman
+router.get('/api/crew/directory', async (req, res) => {
+    const { tanggal_mulai, tanggal_selesai, peran_utama, kota, tag } = req.query;
+
     if (!tanggal_mulai || !tanggal_selesai) {
-        return res.status(400).json({ 
-            error: 'Parameter tanggal_mulai dan tanggal_selesai wajib diisi untuk melakukan filter direktori!' 
+        return res.status(400).json({
+            error: 'Parameter tanggal_mulai dan tanggal_selesai wajib diisi untuk melakukan filter direktori!'
         });
     }
 
-    // Validasi logis tanggal
     if (tanggal_mulai > tanggal_selesai) {
-        return res.status(400).json({ 
-            error: 'Tanggal selesai acara tidak boleh lebih awal dari tanggal mulai.' 
+        return res.status(400).json({
+            error: 'Tanggal selesai acara tidak boleh lebih awal dari tanggal mulai.'
         });
     }
 
     try {
-        // 1. QUERY UTAMA: Mendapatkan kru yang KOSONG (Available) pada rentang tanggal tersebut
-        let availableQuery = `
-            SELECT c.* 
+        // Parameter bersama untuk kedua query (tersedia & disembunyikan)
+        const params = [tanggal_mulai, tanggal_selesai];
+        let filterSql = '';
+
+        if (peran_utama) {
+            params.push(peran_utama);
+            filterSql += ` AND c.peran_utama = $${params.length}`;
+        }
+
+        if (kota) {
+            params.push(`%${kota}%`);
+            filterSql += ` AND c.kota ILIKE $${params.length}`;
+        }
+
+        const tagNorm = normTag(tag).toLowerCase();
+        if (tagNorm) {
+            params.push(tagNorm);
+            const i = params.length;
+            filterSql += `
+                AND (
+                    EXISTS (SELECT 1 FROM unnest(c.peran_list) AS r WHERE LOWER(r) = $${i})
+                    OR EXISTS (SELECT 1 FROM pengalaman_kru pk WHERE pk.crew_id = c.user_id AND LOWER(pk.tag_peran) = $${i})
+                )`;
+        }
+
+        // 1. Kru yang KOSONG di rentang tanggal tersebut (urut rating tertinggi dulu)
+        const availableQuery = `
+            SELECT c.*,
+                (SELECT COALESCE(json_agg(json_build_object('tag', pk.tag_peran, 'event', pk.nama_event, 'tahun', pk.tahun) ORDER BY pk.tahun DESC), '[]'::json)
+                 FROM pengalaman_kru pk WHERE pk.crew_id = c.user_id) AS pengalaman
             FROM crew_profiles c
             WHERE NOT EXISTS (
-                SELECT 1 
-                FROM schedule_entries s
+                SELECT 1 FROM schedule_entries s
                 WHERE s.crew_id = c.user_id
-                  -- Rumus Overlap: Jadwal sibuk kru beririsan dengan tanggal acara
-                  AND s.tanggal_mulai <= $2 
+                  AND s.tanggal_mulai <= $2
                   AND s.tanggal_selesai >= $1
             )
+            ${filterSql}
+            ORDER BY c.rating_avg DESC, c.total_gig_selesai DESC, c.nama_lengkap ASC
         `;
-        let queryParams = [tanggal_mulai, tanggal_selesai];
-        let paramIndex = 3;
+        const availableResult = await pool.query(availableQuery, params);
 
-        // Tambahan filter opsional: Peran Utama (jika dipilih)
-        if (peran_utama) {
-            availableQuery += ` AND c.peran_utama = $${paramIndex}`;
-            queryParams.push(peran_utama);
-            paramIndex++;
-        }
-
-        // Tambahan filter opsional: Kota (jika dipilih)
-        if (kota) {
-            availableQuery += ` AND c.kota = $${paramIndex}`;
-            queryParams.push(kota);
-            paramIndex++;
-        }
-
-        const availableResult = await pool.query(availableQuery, queryParams);
-
-        // 2. QUERY PENDUKUNG: Menghitung jumlah kru yang DISEMBUNYIKAN karena bentrok jadwal
-        let hiddenQuery = `
+        // 2. Jumlah kru yang DISEMBUNYIKAN karena bentrok (dengan filter yang sama)
+        const hiddenQuery = `
             SELECT COUNT(*) AS total_disembunyikan
             FROM crew_profiles c
             WHERE EXISTS (
-                SELECT 1 
-                FROM schedule_entries s
+                SELECT 1 FROM schedule_entries s
                 WHERE s.crew_id = c.user_id
-                  AND s.tanggal_mulai <= $2 
+                  AND s.tanggal_mulai <= $2
                   AND s.tanggal_selesai >= $1
             )
+            ${filterSql}
         `;
-        let hiddenParams = [tanggal_mulai, tanggal_selesai];
-        let hiddenParamIndex = 3;
-
-        if (peran_utama) {
-            hiddenQuery += ` AND c.peran_utama = $${hiddenParamIndex}`;
-            hiddenParams.push(peran_utama);
-            hiddenParamIndex++;
-        }
-
-        if (kota) {
-            hiddenQuery += ` AND c.kota = $${hiddenParamIndex}`;
-            hiddenParams.push(kota);
-            hiddenParamIndex++;
-        }
-
-        const hiddenResult = await pool.query(hiddenQuery, hiddenParams);
+        const hiddenResult = await pool.query(hiddenQuery, params);
         const totalDisembunyikan = parseInt(hiddenResult.rows[0].total_disembunyikan);
 
-        // Pesan log berhasil menggunakan backtick yang benar
         console.log(`[Crew247.id] Pencarian direktori sukses untuk ${tanggal_mulai} s/d ${tanggal_selesai}. Kru tersedia: ${availableResult.rows.length}, Disembunyikan: ${totalDisembunyikan}`);
 
         return res.status(200).json({
@@ -91,7 +87,7 @@ router.get('/api/crew/directory', async (req, res) => {
             filter: {
                 tanggal_mulai,
                 tanggal_selesai,
-                peran_utama: peran_utama || 'Semua Peran',
+                tag: tagNorm || 'Semua Peran',
                 kota: kota || 'Semua Kota'
             },
             meta: {
