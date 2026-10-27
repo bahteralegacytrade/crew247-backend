@@ -30,6 +30,41 @@ app.get('/health', (req, res) => {
     res.status(200).json({ ok: true });
 });
 
+// SEMENTARA - diagnosis koneksi database. Hanya menampilkan alamat server database dan kode kesalahan
+// (tanpa nama pengguna atau password). HAPUS blok ini setelah koneksi beres.
+app.get('/health/db', async (req, res) => {
+    let host = null;
+    let port = null;
+    try {
+        const u = new URL(process.env.DATABASE_URL);
+        host = u.hostname;
+        port = u.port || '5432';
+    } catch (e) {
+        return res.status(500).json({
+            ok: false,
+            masalah: 'Format DATABASE_URL tidak valid (biasanya ada karakter khusus di password yang belum di-encode)'
+        });
+    }
+
+    let timer;
+    try {
+        const pool = require('./db');
+        const batas = new Promise((_, reject) => {
+            timer = setTimeout(() => {
+                const err = new Error('timeout');
+                err.code = 'TIMEOUT_8_DETIK';
+                reject(err);
+            }, 8000);
+        });
+        const r = await Promise.race([pool.query('SELECT NOW() AS waktu'), batas]);
+        return res.status(200).json({ ok: true, host, port, waktu: r.rows[0].waktu });
+    } catch (e) {
+        return res.status(500).json({ ok: false, host, port, kode: e.code || null, jenis: e.name || null });
+    } finally {
+        clearTimeout(timer);
+    }
+});
+
 // Router API
 app.use(require('./routes/auth'));
 app.use(require('./routes/crew'));
