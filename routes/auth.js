@@ -39,12 +39,10 @@ router.post('/api/auth/otp/request', async (req, res) => {
         }
 
         const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiredAt = new Date(Date.now() + 5 * 60 * 1000);
-
         await pool.query(
             `INSERT INTO otp_codes (no_hp, kode_otp, expired_at, sudah_dipakai) 
-             VALUES ($1, $2, $3, FALSE)`,
-            [no_hp, otpCode, expiredAt]
+             VALUES ($1, $2, NOW() + INTERVAL '5 minutes', FALSE)`,
+            [no_hp, otpCode]
         );
 
         const waMessage = `Halo dari Crew247.id! Kode OTP Anda adalah: *${otpCode}*. Berlaku 5 menit. Jangan berikan kode ini ke siapa pun.`;
